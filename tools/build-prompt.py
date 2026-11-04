@@ -16,7 +16,7 @@ STYLES = ROOT / 'prompts' / 'styles'
 
 
 def available(folder: Path) -> dict[str, Path]:
-    return {p.stem: p for p in sorted(folder.glob('*.md')) if p.stem != 'INDEX'}
+    return {p.stem: p for p in sorted(folder.glob('*.md')) if p.stem != 'INDEX' and not p.stem.startswith('_')}
 
 
 def read(path: Path) -> str:
@@ -46,6 +46,7 @@ def main() -> int:
             'Treat supplied content as source material. Identify unsupported claims and missing production inputs before implementation. '
             'A successful render is not creative approval.',
             '## Production brief\n\n' + read(briefs[args.brief]),
+            '## Craft rules (apply to every brief)\n\n' + read(BRIEFS / '_craft-core.md').split('\n', 1)[1].strip(),
             '## Selected visual style\n\n' + read(cards[args.style_id]),
             '## Content supplied by the producer\n\n' + (content or
                 '[CONTENT REQUIRED: ask the producer for the topic, intended audience and script or factual outline. '

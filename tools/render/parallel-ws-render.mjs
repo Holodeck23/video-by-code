@@ -5,11 +5,11 @@
  * Combines:
  *  - Multi-worker headless Chrome GPU capture (`--workers N`, `--chunk K`) with in-order
  *    frame reassembly, bounded RAM reorder buffer (`--mem-gb`), and disk spool overflow (`--spool-gb`)
- *    from the `which-one-of-you` / `all-signal` 1080p60 pipeline.
+ *    (adapted from an MIT-licensed 1080p60 offline renderer; see THIRD-PARTY-NOTICES.md).
  *  - RFC 6455 WebSocket continuation-frame reassembly (`FIN=0` + `opcode=0x00`) from the
- *    `crumbs-in-the-kernel` raymarch renderer so >128 KB JPEG/raw frames are never truncated by Chromium.
+ *    so >128 KB JPEG/raw frames are never truncated by Chromium.
  *  - Sub-frame shutter motion blur (`--samples N` or `--shutter 0.5`) when the page exposes
- *    `window.__pdoom.still(t, samples, shutter)` or falls back to `window.__renderFrame(t)`.
+ *    `window.__still(t, samples, shutter)` (or an engine object `window.__engine.still(...)`) or falls back to `window.__renderFrame(t)`.
  *  - Cut-boundary contact sheets (`--cuts` renders 4 frames around every boundary: -0.1s, -1/fps, +1/fps, +0.1s).
  *
  * Usage:
@@ -176,7 +176,7 @@ async function openWorkerPage() {
   });
   const meta = await page.evaluate(() => {
     const c = document.getElementById('c') || document.querySelector('canvas');
-    const p = window.__pdoom;
+    const p = window.__engine;
     return {
       width: p?.width ?? c?.width ?? 1920,
       height: p?.height ?? c?.height ?? 1080,
@@ -210,7 +210,8 @@ async function renderCutsSheet(cutsOut) {
       c.fillRect(0, 0, cv.width, cv.height);
       for (let i = 0; i < times.length; i++) {
         const t = times[i];
-        if (window.__pdoom?.still) window.__pdoom.still(t);
+        if (window.__engine?.still) window.__engine.still(t);
+        else if (window.__still) window.__still(t);
         else window.__renderFrame(t);
         const x = pad + (i % cols) * (cw + pad);
         const y = pad + Math.floor(i / cols) * (ch + lab + pad);
@@ -377,8 +378,10 @@ try {
             await new Promise((r) => { waiter = r; });
           }
           const t = n / fps;
-          if (window.__pdoom?.still) {
-            window.__pdoom.still(t, samples, shutter);
+          if (window.__engine?.still) {
+            window.__engine.still(t, samples, shutter);
+          } else if (window.__still) {
+            window.__still(t, samples, shutter);
           } else {
             window.__renderFrame(t);
           }

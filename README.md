@@ -68,6 +68,7 @@ and the [12-second vertical short](docs/recipes/vertical-short.md).
 | Lyric film | [recipe](docs/recipes/lyric-music-video.md) |
 | Instrumental visualizer | [recipe](docs/recipes/instrumental-visualizer.md) |
 | Runnable examples | [examples/README.md](examples/README.md) |
+| Licence | MIT ([LICENSE](LICENSE)); adapted third-party code in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) |
 | Origin and reuse boundaries | [PROVENANCE.md](PROVENANCE.md) |
 | Tested scope and limitations | [VALIDATION.md](VALIDATION.md) |
 

@@ -14,7 +14,7 @@ Unifies three production alignment methods:
      word_timestamps=True and initial_prompt when installed.
   3. --backend acoustic: syllable-weighted + 200 fps vocal harmonic band (280-3400 Hz) energy
      warping within clamped 2-bar line windows, with 16th-note snapping for stacked gang vocals
-     (from the "Which One of You" pipeline).
+     (from a lyric-film pipeline).
 
 Usage:
   uv run --python 3.12 tools/timing/align-words.py CUES_OR_SCRIPT AUDIO OUT.json

@@ -1,6 +1,6 @@
 # Provenance and reuse
 
-This kit synthesises engineering and direction techniques from the owner's code-driven
+The kit is MIT-licensed (`LICENSE`). It synthesises engineering and direction techniques from the owner's code-driven
 video experiments: music/lyric pipelines, instrumental studies, spoken explainers,
 short-form experiments and reference-led motion tests. It is written around technique
 rather than project histories or private chats.
@@ -27,7 +27,8 @@ detects shared runs; it does not establish legal clearance or independent expres
 itself. Rendered studies are diagnostic samples, not certification of all 86 styles.
 
 Some engineering ideas in the owner's history came through third-party engines or
-references. Those engines are not vendored here. If a future production copies an actual
+references. Where kit code adapts an MIT-licensed implementation, the file is listed in
+`THIRD-PARTY-NOTICES.md` with the original licence. If a future production copies another
 implementation, preserve its source attribution and applicable licence. Framework,
 font, music and model terms must be checked for that production. This repository does
 not invent a new licence for externally owned material or grant rights to reference art.

@@ -4,7 +4,7 @@
 # ///
 """Offline multi-stem audio analysis for code-driven music and instrumental videos.
 
-Combines the track-agnostic Ignition/All-Signal stem analyzer with the Crumbs lead-pitch,
+Combines a track-agnostic stem analyzer with lead-pitch,
 vibrato, sub-bass and kick/snare transient extractor.
 
 Usage:
@@ -291,7 +291,7 @@ def structure_map(curves, stems, beats, downbeats, sections, silences, duration,
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("production_dir", type=Path)
-    ap.add_argument("--slug", required=True, help="Filename stem, e.g. ignition-syntax")
+    ap.add_argument("--slug", required=True, help="Filename stem, e.g. my-song")
     ap.add_argument("--audio", type=Path, help="Optional explicit audio file if <slug>-44k.wav is not present")
     ap.add_argument("--title", default=None, help="Display title for structure-map.png")
     ap.add_argument("--stem-pitch", action="store_true",

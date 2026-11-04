@@ -23,6 +23,8 @@ python3 tools/build-prompt.py memphis --brief vertical-short \
 | [lyric-video](briefs/lyric-video.md) | A music-led film timed against the selected take |
 | [data-story](briefs/data-story.md) | Evidence, calculation and an honest visual comparison |
 
+Every assembled prompt also includes [the craft rules](briefs/_craft-core.md): pacing, continuity versus cuts, legibility floors, finishing passes, determinism and the sound hierarchy. They apply to every brief and every style; edit that one file to raise the bar everywhere.
+
 Omitting `--content` deliberately keeps a request for the producer's missing topic/script in the assembled prompt. The selected brief is still included. An empty or unreadable supplied file is an error. Unknown style/brief ids fail with the available choices. The builder uses Python's standard library and performs no network calls.
 
 ## How to brief the team
