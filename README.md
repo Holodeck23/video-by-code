@@ -49,6 +49,7 @@ and the [12-second vertical short](docs/recipes/vertical-short.md).
 9. [Encode and deliver](docs/09-encode-and-deliver.md): compatible review files and high-chroma masters.
 10. [Pitfalls](docs/10-pitfalls.md): concrete symptoms, causes and repairs.
 11. [Team playbook](docs/11-team-playbook.md): responsibilities, checkpoints and handoffs.
+12. [Advanced engines, shaders & benchmarks](docs/12-advanced-engines-and-benchmarks.md): stem separation, 120 Hz feature packing, lyric alignment, WebGL post-processing, multi-worker WebSocket capture, and luminance benchmarks.
 
 ## Use the kit
 
@@ -60,7 +61,10 @@ and the [12-second vertical short](docs/recipes/vertical-short.md).
 | Five prompt briefs + 86 technique cards | [prompts/README.md](prompts/README.md) |
 | Browse styles | [style index](prompts/styles/INDEX.md) |
 | Build a prompt | `python3 tools/build-prompt.py whiteboard --brief explainer-voiceover` |
-| Exact graphics, sound and renderer contract | [lib/API.md](lib/API.md) |
+| Exact graphics, sound, features, ink, WebGL & renderer contract | [lib/API.md](lib/API.md) |
+| Stem separation, 120 Hz stem analyzer, multi-backend word aligner & Kokoro TTS | `tools/timing/{separate-stems,analyze-stems,align-words,kokoro-narrate}.py` |
+| High-throughput WebSocket renderer, Pillow workbook renderer & batch imagegen | `tools/render/{parallel-ws-render.mjs,workbook-render.py,codex-imagegen.sh}` |
+| ASR round-trip & verbatim-lift verifiers | `tools/verify/{verify-narration,check-lift}.py` |
 | Lyric film | [recipe](docs/recipes/lyric-music-video.md) |
 | Instrumental visualizer | [recipe](docs/recipes/instrumental-visualizer.md) |
 | Runnable examples | [examples/README.md](examples/README.md) |
@@ -68,7 +72,7 @@ and the [12-second vertical short](docs/recipes/vertical-short.md).
 | Tested scope and limitations | [VALIDATION.md](VALIDATION.md) |
 
 Python tools declare dependencies in PEP 723 headers: run them with `uv run`.
-`beat-grid.py` needs Python 3.10–3.12; use `uv run --python 3.12` for that tool.
+`beat-grid.py`, `separate-stems.py`, and `analyze-stems.py` use Python 3.10–3.12 (`uv run --python 3.12`).
 Read `--help` before a new tool. A tool's FAIL is a reason to investigate; a detector
 warning may be intentional, but the resolution must be recorded.
 
@@ -76,14 +80,22 @@ warning may be intentional, but the resolution must be recorded.
 
 The starter renders Canvas2D pages and schedules procedural Web Audio effects. It can
 mix an external narration or music file, export stills and sheets, and check seek
-determinism. Timing tools identify audio, extract embedded cues and estimate a beat grid.
-Verification tools inspect files, sync, visual statistics, cuts and per-channel encoding loss.
+determinism. The timing toolkit covers audio identity, embedded cue extraction, beat grids,
+Demucs 6-stem separation (`separate-stems.py`), 120 Hz multi-stem feature & guitar pitch
+extraction (`analyze-stems.py`), multi-backend lyric/speech alignment (`align-words.py`:
+`whisper-cli`, `mlx-whisper`, `faster-whisper`, and acoustic energy warping), and local
+Kokoro ONNX narration (`kokoro-narrate.py`). Browser libraries include `lib/harness.js` (`H`),
+`lib/sound.js` (`SOUND`), `lib/features.js` (`FEATURES`), `lib/ink-doodle.js` (`INK`), and
+`lib/webgl-post.js` (`createPost`). Renderers include the reference Playwright single-worker
+renderer (`starter/render.mjs`), the multi-worker GPU WebSocket renderer
+(`tools/render/parallel-ws-render.mjs`), and the browserless Pillow/FFmpeg workbook renderer
+(`tools/render/workbook-render.py`). Verification tools inspect streams, sync, visual look
+statistics, cuts, per-channel encoding loss, ASR narration accuracy (`verify-narration.py`),
+and verbatim n-gram lift (`check-lift.py`).
 
-The handbook also explains advanced engines and alignment workflows. Those explanations
-are not bundled implementations of Blender production, GPU streaming, stem separation,
-ASR, forced alignment or production TTS. Style cards are authoring specifications, not
-86 finished scene engines. Exact frame pixels across different OS/font/GPU versions are
-not promised. See the validation record for the evidence actually obtained.
+Style cards are authoring specifications, not 86 finished scene engines. Exact frame pixels
+across different OS/font/GPU versions are not promised. See the validation record for the
+evidence actually obtained.
 
 ## Checkpoint and backup
 

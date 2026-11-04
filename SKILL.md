@@ -42,11 +42,24 @@ uv run tools/timing/audio-identity.py "$PROD/audio/source.wav" \
   --out "$PROD/analysis/identity.json" --copy-wav "$PROD/analysis/analysis.wav"
 ```
 
-* **Spoken narration:** Synthesize or record each beat/sentence, measure exact chunk boundaries (see [`examples/make-narration.py`](examples/make-narration.py) or [`examples/repo-tour/make-audio.py`](examples/repo-tour/make-audio.py)), write `timing.json` + `captions.srt`, and round-trip check the rendered audio with ASR when available.
-* **Music / lyric tracks:**
-  * Extract embedded cues: `uv run tools/timing/cue-extract.py "$PROD/audio/song.mp3" --out "$PROD/analysis/cues.json"`
-  * Fit beat grid (Python 3.12): `uv run --python 3.12 tools/timing/beat-grid.py "$PROD/analysis/analysis.wav" --out "$PROD/analysis/beats.json"`
-  * Envelope visualizer data: `python3 tools/build-visualizer.py "$PROD/analysis/analysis.wav" --out "$PROD/analysis/features.js"`
+* **Spoken narration:**
+  * Synthesize via local Kokoro ONNX TTS (with `< 4` word fragment merge and `--say say.json` phonetic dictionary):
+    `uv run tools/timing/kokoro-narrate.py script.txt --out-dir "$PROD/audio" --voice af_heart --say say.json`
+  * Verify spoken audio round-trip via local `whisper-cli`:
+    `uv run tools/verify/verify-narration.py "$PROD/audio/narration.wav" "$PROD/audio/timing.json"`
+  * Check scripts/lyrics for verbatim n-gram lift against reference text:
+    `python3 tools/verify/check-lift.py candidate.txt reference.txt`
+* **Music / lyric / stem-reactive tracks:**
+  * Separate 6 stems via Demucs (`vocals, drums, bass, guitar, piano, other`) and normalize 44.1 kHz WAV:
+    `uv run --python 3.12 tools/timing/separate-stems.py "$PROD/audio/song.mp3" --out-dir "$PROD/analysis"`
+  * Extract 120 Hz stem envelopes, monotone musical time `tau`, beat/bar phase, silences, `features.f32`, and 100 fps guitar pitch/vibrato:
+    `uv run --python 3.12 tools/timing/analyze-stems.py "$PROD/analysis" --fps 120 --stem-pitch`
+  * Align word-level lyrics (`whisper-cli`, `mlx-whisper`, `faster-whisper`, or `acoustic` vocal-band energy warping):
+    `uv run tools/timing/align-words.py "$PROD/analysis/stems/vocals.wav" --script lyrics.txt --backend whisper-cli --out "$PROD/analysis/words.json"`
+  * Lightweight single-file cues / beat grid / visualizer envelope:
+    * `uv run tools/timing/cue-extract.py "$PROD/audio/song.mp3" --out "$PROD/analysis/cues.json"`
+    * `uv run --python 3.12 tools/timing/beat-grid.py "$PROD/analysis/analysis.wav" --out "$PROD/analysis/beats.json"`
+    * `python3 tools/build-visualizer.py "$PROD/analysis/analysis.wav" --out "$PROD/analysis/features.js"`
 
 ---
 
@@ -62,9 +75,15 @@ python3 tools/build-prompt.py <style-id> --brief <brief-id> --out "$PROD/style-p
 
 ---
 
-## 5. Scene Authoring Contract (`lib/API.md`, `docs/06-building-scenes.md`)
+## 5. Scene Authoring Contract (`lib/API.md`, `docs/06-building-scenes.md`, `docs/12-advanced-engines-and-benchmarks.md`)
 
-Every scene HTML page loads [`lib/harness.js`](lib/harness.js) (`window.H`) and optionally [`lib/sound.js`](lib/sound.js) (`window.SOUND`) and exposes:
+Every scene HTML page loads [`lib/harness.js`](lib/harness.js) (`window.H`) and optionally:
+* [`lib/sound.js`](lib/sound.js) (`window.SOUND`) — procedural Web Audio synthesis
+* [`lib/features.js`](lib/features.js) (`window.FEATURES`) — 120 Hz binary `features.f32` stem cursor, refractory onset pulse, monotone `tau(t)`, and `words.json` lyric lookup
+* [`lib/ink-doodle.js`](lib/ink-doodle.js) (`window.INK`) — 8 fps deterministic line-boil, wobbled doodle primitives, left-anchored ALL-CAPS write-on `marker`, and Ken Burns `plate` camera
+* [`lib/webgl-post.js`](lib/webgl-post.js) (`createPost`) — 4-stage Three.js post-processing (`FxOverShader`, `UnrealBloomPass`, `FinalGradeShader` with ACES / `paperMode`, luma-only impact inversion, glitch, shake, grain, and crisp UI overlay)
+
+Every page exposes:
 * `<canvas id="c" width="1920" height="1080"></canvas>` (or `1080` × `1920` for vertical)
 * `window.DURATION` (seconds) and `window.FPS` (default `30`)
 * `window.__ready` (Promise resolving after fonts and cached offscreen plates are ready)
@@ -92,11 +111,23 @@ Every scene HTML page loads [`lib/harness.js`](lib/harness.js) (`window.H`) and 
    node starter/render.mjs path/to/film.html --stills 1.5,12.0,24.0 --outdir "$PROD/stills"
    ```
 3. **Full MP4 Render:**
-   ```sh
-   node starter/render.mjs path/to/film.html \
-     --out "$PROD/renders/master.mp4" --fps 30 --audio page \
-     --voice "$PROD/audio/narration.wav"
-   ```
+   * **Reference single-worker Playwright renderer (default 30 fps Canvas2D + procedural audio):**
+     ```sh
+     node starter/render.mjs path/to/film.html \
+       --out "$PROD/renders/master.mp4" --fps 30 --audio page \
+       --voice "$PROD/audio/narration.wav"
+     ```
+   * **Multi-worker GPU WebSocket renderer (60 fps Three.js / WebGL / kinetic typography):**
+     ```sh
+     node tools/render/parallel-ws-render.mjs \
+       --url "http://127.0.0.1:5173/?capture=1" --duration <DURATION> --fps 60 --workers 4 \
+       --audio "$PROD/analysis/analysis.wav" --out "$PROD/renders/master.mp4"
+     ```
+   * **Browserless Python + Pillow `rawvideo` renderer (captioned workbooks & tutorials):**
+     ```sh
+     uv run tools/render/workbook-render.py \
+       --spec workbook.json --audio "$PROD/audio/narration.wav" --out-dir "$PROD/renders"
+     ```
 
 ---
 

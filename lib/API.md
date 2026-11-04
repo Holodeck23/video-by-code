@@ -72,17 +72,52 @@ Synthesised with Web Audio only. No audio files.
 - `SOUND.renderOffline(scoreFn, duration, sampleRate = 48000, opts)` returns a Promise of an interleaved stereo `Float32Array`.
 - `SOUND.toWav(interleaved, sampleRate)` returns WAV bytes as a `Uint8Array`.
 
-## 4. Renderer (`starter/render.mjs`)
+## 4. `FEATURES` audio-analysis & lyric loader (`lib/features.js`, global `window.FEATURES`)
+
+Loads offline stem analysis (`analysis.json` + binary `features.f32` from `tools/timing/analyze-stems.py`) and word-aligned lyrics/captions (`words.json` from `tools/timing/align-words.py`) for deterministic frame lookup at any timestamp `t`:
+
+- `await FEATURES.load(analysisJsonUrl, featuresBinUrl)` returns feature controller `f`:
+  - `f.cursorAt(t, out)`: writes interpolated 120 Hz stem channels (`full`, `drums`, `bass`, `guitar`, `piano`, `other`, `vocals`, each with `.level`, `.env`, `.onset`, `.bright`), plus `beatPhase`, `barPhase`, `beatIdx`, `barIdx`, `isDownbeat`, `inSilence`, `section`, and monotone musical time `tau` into `out`.
+  - Auto-gates absent Demucs stems (`span < 0.04`) to `0` so stem bleed never triggers visual transients.
+  - `f.sinceLast(name, t)`: seconds elapsed since the most recent refractory-gated onset peak on channel `name`.
+  - `f.pulseAt(name, t, attack = 0.012, decay = 0.22)`: shaped `[0..1]` transient envelope for channel `name` at time `t`.
+  - `f.tau(t)`: strictly non-decreasing musical time integral.
+- `await FEATURES.loadLyrics(wordsJsonUrl)` returns `{ lines, words, duration }`:
+  - Applies `FEATURES.fixFirstWord(data, maxDur = 0.45)` automatically so pre-vocal silence is never attached to word 0.
+  - `FEATURES.lineAt(lyrics, t, { leadIn = 0.18, tailOut = 0.35 })` returns `{ active, prev, next, word, wordIndex, lineProgress, wordProgress }`.
+
+## 5. `INK` hand-drawn doodle & camera plate kit (`lib/ink-doodle.js`, global `window.INK`)
+
+Deterministic whiteboard/notebook drawing and Ken Burns plate camera helpers:
+
+- `INK.setBoil(t, seed = 1)`: quantizes hand-drawn wobble phase to 8 fps (`floor(t * 8)`).
+- Primitives: `INK.line(ctx, x1, y1, x2, y2, opts)`, `INK.curve(ctx, pts, opts)`, `INK.box(ctx, x, y, w, h, opts)`, `INK.circle(ctx, cx, cy, r, opts)`, `INK.under(ctx, x, y, w, opts)`, `INK.arrow(ctx, x1, y1, x2, y2, opts)`, `INK.thought(ctx, cx, cy, rx, ry, opts)`.
+- `INK.marker(ctx, text, x, y, opts)`: ALL-CAPS marker typography with left-anchored write-on (`u` in `0..1`) so centered labels never shift horizontally while typing on.
+- `INK.plate(ctx, img, tLocal, dur, cam, opts)`: cover-fit Ken Burns camera with normalized Points of Interest (`fx, fy` in `0..1`), zoom, roll, pan (`k0 -> k1`), `INK.glow`, and `INK.flicker`.
+
+## 6. Three.js WebGL post-processing pipeline (`lib/webgl-post.js`, ES module `createPost`)
+
+4-stage deterministic composer (`RenderPass -> FxOverShader -> UnrealBloomPass -> FinalGradeShader`) for Three.js scenes:
+
+- `createPost(THREE, { EffectComposer, RenderPass, ShaderPass, UnrealBloomPass }, renderer, scene, camera, width, height)` returns `{ composer, fxOver, bloom, finalPass, setSize(w, h), update(params), render() }`.
+- `FxOverShader`: selective warm/saturated HDR push so neutral white typography does not bloom.
+- `FinalGradeShader`: ACES tone mapping with light-ground `paperMode` soft-knee bypass, luma-only impact inversion (`col + (1 - 2Y)`), radial chromatic aberration, hash-band glitch, camera shake, deterministic 2×2 film grain, scanlines, vignette, and crisp 2D UI overlay texture (`tUI`).
+
+## 7. Renderers (`starter/render.mjs` & `tools/render/`)
 
 ```
-node render.mjs <page.html> --out out.mp4 [--fps 30] [--from 0] [--to <DURATION>]
+node starter/render.mjs <page.html> --out out.mp4 [--fps 30] [--from 0] [--to <DURATION>]
                [--audio none|page|<file.wav>] [--voice narration.wav] [--crf 18]
 ```
 - `--audio page` renders `window.scoreSound` offline through `SOUND.renderOffline` and muxes it.
 - `--voice` mixes a narration track over the effects; the page's sound is rendered in voiceover mode.
 - The canvas size sets the output size. Frame `n` is drawn at `t = from + n / fps`.
+- High-throughput / specialized renderers in `tools/render/`:
+  - `node tools/render/parallel-ws-render.mjs`: multi-worker headless Chrome GPU WebSocket capture with RFC 6455 continuation-frame reassembly (`> 128 KB`), RAM/disk spool caps, subframe motion blur (`--samples`), and 4-frame cut contact sheets (`--cuts`).
+  - `uv run tools/render/workbook-render.py`: browserless Python + Pillow + FFmpeg `rawvideo rgb24` renderer with BT.709 conversion/tags, `.srt`, `poster.png`, and `qa/storyboard.png`.
+  - `bash tools/render/codex-imagegen.sh`: parallel batch storyboard plate generator locked to a reference PNG.
 
-## 5. Export limits and reproducibility
+## 8. Export limits and reproducibility
 
 - Video output is H.264, 8-bit yuv420p, limited-range BT.709 with AAC when audio is present. It is a compatibility export, not a 4:4:4 archival master.
 - Ranges must satisfy `0 <= from < to <= DURATION`. Output contains `round((to-from)*fps)` frames; choose frame-aligned durations for an exact requested length. Frame 0 samples `from`; the endpoint `to` is exclusive.
