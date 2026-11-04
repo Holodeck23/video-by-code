@@ -41,6 +41,10 @@ Embedded subtitle times, ASR timestamps and interpolated words must retain their
 | Frame changes after seeking | Mutable state, per-frame random calls or live clocks | Use absolute-time formulas, seeded immutable parameters and seek-hash checks |
 | Earlier scene ghosts into later scene | Scene was not cleared, state leaked, shader path failed | Reset baseline, balance state stack and inspect browser/shader errors |
 | Label fits at first, clips later | Fallback font or emphasis weight changed width | Await exact fonts; measure with final weight and test longest phrases |
+| Semi-bold system font overflows safe zone | `600` weight in `Arial` snaps to `700` Bold on macOS, widening lines | Use weights the font actually ships (`400` or `700`) and audit `actualBoundingBox*` across all frames |
+| Counter-scaled label clips at overview zoom | Zooming out (`z <= 0.30`) enlarges counter-scaled text in world units near a viewport clip edge | Widen overview zoom/centre and inspect frame `#0` and `#N-1` against the clip rect |
+| Continuous pan triggers `cut-harshness.py` SLAM spike | Camera move started at `beat[i].start - preRoll` while `i` switched at `beat[i].start`, jumping 25% in one frame | Start interpolation at `beat[i].start` and fade beat-specific overlays over 0.2 s |
+| Return/feedback loop hides forward route | Loop polyline shared a segment with the main route | Offset return loops onto a parallel track or 45-degree bypass |
 | Caption collides with closing prompt | Caption region was added after scene design | Reserve and test bounds at every relevant frame |
 | One-word caption tails flicker | Fixed token grouping ignored phrase structure | Rebalance adjacent cues and give the phrase a readable hold |
 | Type glows into a white blob | Bloom/post-processing includes text | Separate crisp overlay from bloom or constrain effect strength |

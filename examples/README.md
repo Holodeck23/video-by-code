@@ -10,6 +10,7 @@ the checkout. Use the four-second starter before these examples.
 | `hello-explainer.html` | 12 s / landscape | Hand-drawn diagram with cached paper and effects; uses web fonts |
 | `narrated-explainer.html` | 36 s / landscape | Five scenes, phrase captions, local voice fixture; no web assets |
 | `vertical-short.html` | 12 s / vertical | Separate vertical composition and procedural effects |
+| `repo-tour/film.html` | 27.67 s / vertical | Seven-beat `transit-map` short with continuous camera, LED board, safe-area text bounds and external Kokoro TTS script (`repo-tour/make-audio.py`) |
 | `instrumental.html` | track length / landscape | Audio-envelope-driven visualizer via generated feature script |
 | `styles/*.html` | 8 s / landscape | [Eight sampled material studies](styles/README.md), with limited animation |
 

@@ -34,7 +34,13 @@ Canvas state is mutable. Use balanced `save()` and `restore()` around helpers an
 
 DOM authoring is attractive for responsive text, UI demonstrations and CSS effects such as glass panels. A paused animation timeline can be sought to time `t`, after assets are ready. Export must drive that seek explicitly. Timers, CSS animations running independently and late asynchronous timeline construction can break determinism.
 
-When adopting HyperFrames or another HTML renderer, pin a release and run its own checks before exporting. Confirm its current rules for composition metadata, timeline registration, audio track identifiers and async readiness. Do not copy a command from an old experiment without checking the pinned CLI's `--help`.
+When adopting HyperFrames or another HTML renderer, pin a release and run its own checks before exporting. Confirm its current rules for composition metadata, timeline registration (`window.__timelines`), audio track identifiers (`<audio id="...">` is required so tracks are not silent in renders) and async readiness. Do not copy a command from an old experiment without checking the pinned CLI's `--help`.
+
+If the desktop `HyperFrames.app` is installed locally, it helps in two specific ways:
+1. **DOM/CSS/GSAP compositions:** Its built-in linter and studio inspector provide real DOM contrast checks, layout collision detection and interactive timeline scrubbing for DOM elements.
+2. **Design and cadence references:** Its local registry cache (`~/.hyperframes/cache/`) and bundled skills (`HyperFrames.app/Contents/Resources/app.asar.unpacked/skills/` and `vendor/`) contain reusable motion blueprints (such as camera station-pan cadences and caption read-time floors like `0.5 s + 0.3 s` per word) that can inform shot planning in any stack.
+
+However, do not wrap a pure Canvas 2D film inside a HyperFrames GSAP proxy tween just to use its runner. DOM-based contrast and layout checkers are blind to `<canvas>` pixels (reporting `0/0` text nodes or false-positive `dead_stretch` warnings), and high-quality intermediate exports can balloon to 150–235 MB for a 30-second short. For Canvas 2D films, use this kit's native `starter/render.mjs` pipeline alongside an all-frame `measureText` bounding-box audit (`window.__textBounds()` / `tests/layout.mjs`), `cut-harshness.py` and `verify-video.py`.
 
 When integrating a Canvas scene into a DOM timeline, make the timeline set a numeric playhead and call the same `draw(t)` used in testing. Do not implement one animation for preview and another for export.
 

@@ -1,0 +1,86 @@
+{
+  "title": "From brief to video",
+  "style": "transit-map",
+  "voice": "bf_emma",
+  "language": "en-gb",
+  "speed": 0.88,
+  "beats": [
+    {
+      "id": "route",
+      "title": [
+        "From idea",
+        "to video."
+      ],
+      "lines": [
+        "How do you make a video",
+        "with code? Follow the route."
+      ]
+    },
+    {
+      "id": "brief",
+      "title": [
+        "First stop:",
+        "the brief."
+      ],
+      "lines": [
+        "Start with a brief.",
+        "What should the viewer learn?"
+      ]
+    },
+    {
+      "id": "style",
+      "title": [
+        "86 ways",
+        "to draw it."
+      ],
+      "lines": [
+        "Pick a visual style.",
+        "There are eighty-six recipes."
+      ]
+    },
+    {
+      "id": "timing",
+      "title": [
+        "One clock.",
+        "Every cue."
+      ],
+      "lines": [
+        "Lock the voice. Put scenes and",
+        "captions on the same timeline."
+      ]
+    },
+    {
+      "id": "render",
+      "title": [
+        "Draw time.",
+        "Make frames."
+      ],
+      "lines": [
+        "Code draws each moment.",
+        "The renderer builds the frames."
+      ]
+    },
+    {
+      "id": "check",
+      "title": [
+        "Check what",
+        "you export."
+      ],
+      "lines": [
+        "Check for missing frames,",
+        "clipped text, and drifting audio."
+      ]
+    },
+    {
+      "id": "team",
+      "title": [
+        "Your team.",
+        "One route."
+      ],
+      "lines": [
+        "Humans direct. Agents build.",
+        "Follow the runbook from brief to video."
+      ]
+    }
+  ]
+}

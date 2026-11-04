@@ -17,7 +17,8 @@ alignment pipeline discussed is supplied by this repository.
 | Audio identity | Hash/copy/probe verified; deliberate Opus-in-M4A warning exercised |
 | Explainer | 36.000 seconds, 1920×1080, 30 fps, 1080 decoded frames, exact-length AAC, limited-range BT.709, clean decode |
 | Vertical short | 12.000 seconds, 1080×1920, 30 fps, 360 decoded frames, exact-length AAC, limited-range BT.709, clean decode |
-| Example text bounds | All 1440 output frames scanned; 14512 text draws with no canvas-bound violations |
+| Repo tour (`transit-map`) | 27.667 seconds, 1080×1920, 30 fps, 830 decoded frames, local Kokoro (`bf_emma`) narration + page sound in voiceover mode, -14.3 LUFS / -1.5 dBTP, 0 safe-box text violations (`80..960, 190..1640`), 0 cut spikes above 10× mean (max 8.9×), local Whisper ASR round-trip verified |
+| Example text bounds | All 2270 output frames across worked films scanned; no canvas-bound or critical safe-area violations |
 | Style catalog | 86/86 pass structural/API lint; paired-source eight-word overlap checks pass |
 | Prompt builder | Default/content/inline/saved variants and unknown/missing-input failures tested |
 | Style samples | Eight separate still studies and seek checks; sampled material study, not full films |

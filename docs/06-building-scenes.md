@@ -137,6 +137,10 @@ For active-word typography, measure the entire phrase once and keep positions st
 
 Align labels to the geometry they name. Add explicit collision bounds, including shadow or stroke. Inspect the longest labels and dense frames at delivery scale. Captions need their own reserved region; see [chapter 5](05-narration-and-captions.md).
 
+Watch for two subtle Canvas text measurement traps found in production:
+1. **System font weight snapping:** On macOS Chrome, system fonts such as `Arial` only provide weights `400` and `700`. Requesting `600 48px Arial,sans-serif` snaps to Bold (`700`), which can widen a long caption line by 8–10% and push it past the horizontal safe zone. Test `measureText(s)` using the exact resolved weight on the target machine.
+2. **Glyph overhang and descenders vs. anchor coordinates:** `actualBoundingBoxLeft` and `actualBoundingBoxDescent` extend beyond the nominal `x` and `y` passed to `fillText`. Leave at least 6–8 px of margin inside your target safe box (for example, anchor left-aligned headlines at `x >= 86` when the safe zone begins at `x = 80`, and keep caption baselines at `y <= 1622` when the safe zone ends at `y = 1640`). Expose a `window.__textBounds()` array from your scene so automated checks can distinguish **story-critical text** (checked against strict safe-area margins) from **ambient chrome** (checked against the full canvas).
+
 ## Show state and consequence
 
 For a queue, define job arrival times and completion times. At time `t`, derive the state from those events:
@@ -161,6 +165,8 @@ Plan continuity in screen position, scale, colour and direction. When a job beco
 Test the frames immediately before and after every boundary. For a cut at `tc`, inspect `tc - 1/fps`, `tc` and `tc + 1/fps`, plus a short continuous clip. A centre-frame contact sheet will miss a one-frame flash.
 
 When mapping a fractional cut time to an output frame, choose the first sampled frame on or after the cut: `nCut = Math.ceil((tc - from) * fps)`. This is a different operation from rounding a requested output duration to a frame count. Using `round` for the cut can switch scenes one sample early. Prefer authored integer-frame boundaries when exact edit placement matters, and test the actual samples around the boundary rather than only the analytic camera path.
+
+In continuous-camera styles (such as `transit-map`, where the camera pans across a world canvas instead of cutting), never start a beat's camera interpolation at `beat[i].start - preRoll` if the active beat index `i` only increments when `t >= beat[i].start`. Doing so holds the camera at `beat[i - 1]` until `t = beat[i].start` and then jumps instantaneously to `preRoll / moveDuration` on the boundary frame, creating a one-frame luma spike in `cut-harshness.py`. Start the camera move at `beat[i].start` (or evaluate a global camera keyframe table independent of `i`), fade beat-local callout cards over 0.18–0.22 s, and delay station-specific overlays until the camera settles (`local > 0.45`) so labels do not collide with moving routes during the pan. When zooming out to an overview (`z <= 0.30`) inside a clipped viewport card, verify that counter-scaled labels (`size / Math.pow(z, 0.78)`) on outer nodes still clear the clip rectangle on the very first and last frames.
 
 The included renderer samples one picture per output frame. It has no built-in multi-sample motion blur flag. If adding blur in a custom engine, average subframes within the current shot's interval and avoid sampling across a hard cut. Global frame blending can leave ghosts from the previous shot.
 
