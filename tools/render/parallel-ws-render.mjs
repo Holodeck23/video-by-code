@@ -14,7 +14,7 @@
  *
  * Usage:
  *   node tools/render/parallel-ws-render.mjs <page.html|url> --out /abs/out.mp4
- *        [--fps 60] [--from 0] [--to DUR] [--workers 3] [--chunk 8] [--audio /abs/song.wav]
+ *        [--fps 60] [--from 0] [--to DUR] [--workers 2] [--chunk 12] [--audio /abs/song.wav]
  *        [--crf 18] [--preset medium] [--tune grain] [--samples 1] [--shutter 0.5]
  *
  *   node tools/render/parallel-ws-render.mjs <page.html|url> --cuts /abs/cuts-sheet.jpg [--fps 60]
@@ -33,7 +33,7 @@ const target = argv[0];
 if (!target || target === '--help' || target === '-h') {
   console.log(`Usage:
   node tools/render/parallel-ws-render.mjs <page.html|url> --out /abs/out.mp4
-       [--fps 60] [--from 0] [--to DUR] [--workers 2] [--chunk 8] [--audio /abs/audio.wav]
+       [--fps 60] [--from 0] [--to DUR] [--workers 2] [--chunk 12] [--audio /abs/audio.wav]
        [--crf 18] [--preset medium] [--tune grain] [--samples 1] [--shutter 0.5]
   node tools/render/parallel-ws-render.mjs <page.html|url> --cuts /abs/cuts-sheet.png [--fps 60]`);
   process.exit(target ? 0 : 2);

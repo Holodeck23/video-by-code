@@ -24,6 +24,11 @@ alignment pipeline discussed is supplied by this repository.
 | Style samples | Eight separate still studies and seek checks; sampled material study, not full films |
 | Sharing | Gitleaks working snapshot and all reachable commit history; npm audit; manual content/provenance review |
 | Clean reproduction | Fresh ZIP extraction + `npm ci`; 11 documented install, render, verify and prompt/card steps passed |
+| Licence | MIT for the kit; adapted MIT code listed with its original notice in `THIRD-PARTY-NOTICES.md` |
+| Craft rules | Shared `prompts/briefs/_craft-core.md` included in every assembled prompt; all briefs pass the 8-word overlap check against all 86 source exports, the core also at 6 words |
+| Narrated example | Rebuilt as one continuous film; determinism, layout (0 violations over 1080 frames) and the full recipe (14/14 verifier checks, -14.1 LUFS, -1.5 dBTP) pass; mean frame time 13.6 ms |
+| Channel SSIM tool | Rewritten with decode-order pairing and per-channel numpy SSIM: lossless 4:4:4 vs source PASS (>= 0.9994 all channels), 4:2:0 on fine saturated detail FAIL (R 0.82), an ffv1 source with a 1 ms time base pairs correctly |
+| Public-repo sweep | No personal paths, project/song titles, reference titles or private engine names in tracked files |
 
 The complete private evidence set is kept in the production home outside this repo.
 The shared kit includes reproducible test scripts and this concise result record, not
