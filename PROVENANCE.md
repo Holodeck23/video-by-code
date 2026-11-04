@@ -15,10 +15,9 @@ rather than project histories or private chats.
 | External framework documentation | Linked primary sources in the relevant chapters; implementations are optional |
 | New examples, templates and packaging | Original teaching and handoff material for this kit |
 
-The two extraction reports live in the workspace research home
-`/Users/Shared/second-brain/research/video-by-code/`. That research archive also links to
-the original projects. Their benchmarks describe particular versions on particular
-hardware. They are not throughput guarantees or proof of creative acceptance.
+The two extraction reports remain in the author's private research archive outside this
+repository. Their benchmarks describe particular versions on particular hardware. They
+are not throughput guarantees or proof of creative acceptance.
 
 The original Style Atlas archive remains outside this kit. No original prompt export,
 poster code or media is distributed in the kit. The cards describe physical appearance,

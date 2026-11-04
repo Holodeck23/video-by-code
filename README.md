@@ -28,10 +28,9 @@ node starter/render.mjs starter/scene.html --out "$PROD/renders/starter.mp4" --a
 bash starter/verify.sh "$PROD/renders/starter.mp4" 4 30
 ```
 
-`PROD` must be replaced with a real absolute path. On this workspace, ordinary media
-belongs under `/Users/Shared/second-brain/outputs/video/<production>/`; music productions
-use the established `outputs/suno/<song>-music-video/` home. Client material belongs in
-the user's private vault instead. Code stays in a code checkout, media stays outside it.
+`PROD` must be replaced with a real absolute path outside this checkout (for example,
+`~/video-outputs/<production>/`). Keep private client material in private storage.
+Code stays in a code checkout, media stays outside it.
 
 The first video is deliberately small: four seconds, 1920×1080, 30 fps, 120 frames.
 Continue with the [36-second narrated explainer](docs/recipes/narrated-explainer.md)
@@ -55,6 +54,7 @@ and the [12-second vertical short](docs/recipes/vertical-short.md).
 
 | Area | Entry point |
 |---|---|
+| Agent skill wrapper | [SKILL.md](SKILL.md) |
 | Fast agent handoff | [RUNBOOK.md](RUNBOOK.md) |
 | Brief, timeline, QA and delivery forms | [templates/](templates/) |
 | Five prompt briefs + 86 technique cards | [prompts/README.md](prompts/README.md) |
