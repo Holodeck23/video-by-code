@@ -1,0 +1,61 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:#000}canvas{display:block}</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// Every frame is a pure function of absolute time t (seconds).
+// No requestAnimationFrame, no Date.now(), no Math.random(), no state carried between frames.
+const W = 1920, H = 1080, ctx = document.getElementById('c').getContext('2d');
+
+// Timeline data (in a real project: loaded from data/timeline.json produced by your timing tools).
+const BPM = 120, BEAT = 60 / BPM;
+const WORDS = [
+  { w: 'every',  s: 0.50, e: 0.90 }, { w: 'frame',  s: 0.90, e: 1.40 },
+  { w: 'is',     s: 1.40, e: 1.60 }, { w: 'a',      s: 1.60, e: 1.75 },
+  { w: 'function', s: 1.75, e: 2.40 }, { w: 'of',   s: 2.40, e: 2.60 },
+  { w: 'time',   s: 2.60, e: 3.60 },
+];
+
+// Seeded PRNG: same seed, same "random" layout on every frame and every machine.
+function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd = mulberry32(42);
+const DOTS = Array.from({ length: 140 }, () => ({ x: rnd(), y: rnd(), r: 1 + rnd() * 3, sp: 0.02 + rnd() * 0.06 }));
+
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const easeOut = (x) => 1 - Math.pow(1 - clamp(x, 0, 1), 3);
+
+window.__renderFrame = (t) => {
+  // Beat pulse derived from t, not from a live audio input.
+  const phase = (t % BEAT) / BEAT, kick = Math.exp(-phase * 6);
+
+  ctx.fillStyle = '#05070c'; ctx.fillRect(0, 0, W, H);
+
+  // Drifting particles: position = start + speed * t, wrapped. Closed-form, so any t can be rendered first.
+  ctx.fillStyle = '#38ee82';
+  for (const d of DOTS) {
+    const y = ((d.y - d.sp * t) % 1 + 1) % 1;
+    ctx.globalAlpha = 0.25 + 0.5 * kick * d.r / 4;
+    ctx.beginPath(); ctx.arc(d.x * W, y * H, d.r * (1 + kick), 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Karaoke line: sung words settle white, the active word takes the accent, upcoming words stay dim.
+  ctx.font = '600 84px "Helvetica Neue", Arial, sans-serif';
+  ctx.textBaseline = 'middle';
+  const gap = 28, widths = WORDS.map(x => ctx.measureText(x.w).width);
+  const total = widths.reduce((a, b) => a + b, 0) + gap * (WORDS.length - 1);
+  let x = (W - total) / 2;
+  WORDS.forEach((wd, i) => {
+    const active = t >= wd.s && t < wd.e, sung = t >= wd.e;
+    const rise = easeOut((t - wd.s) / 0.25);
+    ctx.fillStyle = active ? '#38ee82' : sung ? '#f2f2f2' : 'rgba(242,242,242,0.18)';
+    ctx.fillText(wd.w, x, H / 2 + (t < wd.s ? 0 : 12 * (1 - rise)));
+    x += widths[i] + gap;
+  });
+
+  // Timecode in the corner: makes contact sheets self-labelling.
+  ctx.font = '24px Menlo, monospace'; ctx.fillStyle = 'rgba(242,242,242,0.4)';
+  ctx.fillText(`t=${t.toFixed(3)}s`, 40, H - 40);
+};
+window.__ready = document.fonts.ready.then(() => true);
+</script></body></html>

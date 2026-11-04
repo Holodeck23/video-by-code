@@ -1,0 +1,8 @@
+node_modules/
+out/
+*.mp4
+*.wav
+*.mov
+*-sheet.jpg
+frames/
+.DS_Store

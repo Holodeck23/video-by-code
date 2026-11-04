@@ -1,0 +1,10 @@
+{
+  "name": "video-by-code-starter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs",
+    "determinism": "node determinism.mjs"
+  },
+  "dependencies": { "playwright": "1.56.0" }
+}
