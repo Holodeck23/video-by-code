@@ -1,65 +1,472 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>From time to film</title>
-<style>html,body{margin:0;background:#111b25}canvas{display:block}</style></head>
+<style>html,body{margin:0;background:#16212b}canvas{display:block}</style></head>
 <body><canvas id="c" width="1920" height="1080"></canvas>
 <script src="../lib/harness.js"></script><script src="../lib/sound.js"></script>
 <script>
-// Five authored 7.2-second scenes. Audio fixture and captions use these same boundaries.
+// "From time to film": a 36-second narrated explainer built as one continuous composition.
+// A flip-book becomes a stage; its clock unrolls into a timeline; the playhead splits open
+// onto cause and effect; that scene exports into a file; the file is checked; the parts
+// are saved and rebuilt. Every cue, caption and sound is scheduled from VOICE, so a
+// retimed voice moves picture, captions and effects together.
 // No web fonts or external assets. Same environment + same t => same canvas pixels.
-const ctx = document.getElementById('c').getContext('2d');
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 window.DURATION = 36; window.FPS = 30;
-const C = {paper:'#f2eee4',ink:'#172733',mute:'#5d6d73',blue:'#185dcc',red:'#b23425',green:'#187659'};
-const TITLES = ['A frame is a moment.', 'One timeline. Two outputs.', 'Motion explains the idea.', 'Test the exported film.', 'Deliver the whole system.'];
-const CAPTIONS = [
-  ['A video is a sequence of drawings.', 'Each frame asks what the scene looks like now.'],
-  ['Keep picture, sound, and captions on one timeline.', 'Changing the timing should change them together.'],
-  ['Reveal cause before effect.', 'Move the object that matters, then hold the result long enough to read.'],
-  ['Check the finished file for missing frames,', 'clipped labels, wrong colours, and sound that drifts.'],
-  ['Save the source, timing, media, and checks.', 'A team can reproduce the film and improve the next one.']
+
+// Narration timing. Text and slots match examples/make-narration.py (five 7.2 s slots, each
+// cue 200 ms in). Phrase times are the pauses measured in that fixture voice with
+//   ffmpeg -i audio/narration.wav -af silencedetect=noise=-40dB:d=0.12 -f null -
+// A different voice moves them; re-measure and paste new numbers here. [start, end, text, caption group]
+const VOICE = [
+  [0.20, 2.06, 'A video is a sequence of drawings.', 0],
+  [2.30, 4.62, 'Each frame asks what the scene looks like now.', 1],
+  [7.40, 8.15, 'Keep picture,', 2], [8.38, 8.84, 'sound,', 2], [9.05, 10.86, 'and captions on one timeline.', 2],
+  [11.11, 13.34, 'Changing the timing should change them together.', 3],
+  [14.61, 16.23, 'Reveal cause before effect.', 4],
+  [16.48, 18.01, 'Move the object that matters,', 5], [18.25, 20.20, 'then hold the result long enough to read.', 5],
+  [21.81, 23.94, 'Check the finished file for missing frames,', 6],
+  [24.21, 25.04, 'clipped labels,', 7], [25.26, 26.05, 'wrong colours,', 7], [26.27, 27.46, 'and sound that drifts.', 7],
+  [29.01, 29.92, 'Save the source,', 8], [30.19, 30.66, 'timing,', 8], [30.88, 31.34, 'media,', 8], [31.54, 32.21, 'and checks.', 8],
+  [32.45, 35.28, 'A team can reproduce the film and improve the next one.', 9],
 ];
-const P=H.prog, E=H.ease;
-function text(s,x,y,px=48,color=C.ink,align='left',weight=700){ctx.font=`${weight} ${px}px Arial,sans-serif`;ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline='alphabetic';ctx.fillText(s,x,y);}
-function box(x,y,w,h,color=C.paper,r=20){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
-function line(x1,y1,x2,y2,color=C.ink,width=5){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
-function arrow(x1,y1,x2,y2,u,color=C.blue){if(u<=0)return;const x=H.lerp(x1,x2,u),y=H.lerp(y1,y2,u);line(x1,y1,x,y,color,8);if(u>.98){const a=Math.atan2(y2-y1,x2-x1);for(const s of [-1,1])line(x,y,x-26*Math.cos(a+s*.55),y-26*Math.sin(a+s*.55),color,8);}}
-function frame(x,y,w,h,at,accent=C.blue){box(x+10,y+12,w,h,'#d4d9d8');box(x,y,w,h,'#ffffff');const r=h*.27,cx=x+w/2,cy=y+h*.46;ctx.strokeStyle=accent;ctx.lineWidth=7;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();const a=at/6*Math.PI*2-Math.PI/2;line(cx,cy,cx+Math.cos(a)*r*.8,cy+Math.sin(a)*r*.8,accent,7);text(`t = ${at.toFixed(2)} s`,cx,y+h-28,32,C.mute,'center',400);}
-function first(u,t){
- frame(1130,345,510,360,t);const a=E.outCubic(P(u,.7,2.4));arrow(655,520,1050,520,a);
- text('draw(t)',425,470,88,C.blue,'center');text('absolute time',425,550,36,C.mute,'center',400);
- const n=Math.floor(t*30);text(String(n).padStart(4,'0'),1385,820,88,C.ink,'center');text('FRAME INDEX  /  30 FPS',1385,875,28,C.mute,'center',400);
+const S = i => VOICE[i][0], EN = i => VOICE[i][1];
+const q = x => Math.round(x * 30) / 30; // every event sits on a frame, so sound and picture meet exactly
+
+// Event times (seconds), all derived from the phrases above.
+const T = (() => {
+  const o = {
+    hook: .27, flip: .6, zoom0: 1.93, zoom1: 2.73,
+    dial0: S(1) + .3, arr0: S(1) + 1.1, seek1: EN(1) + .3, unroll0: S(2) - 1.05, unroll1: S(2) - .05,
+    shotB: S(2) + .25, shotC: S(2) + .45, wave0: S(3), pill: S(4), sweep0: S(4) + .55, sweep1: EN(4) - .1,
+    edit0: S(5) + .25, shift0: S(5) + .85, wipe0: EN(5) + .1, wipe1: S(6) - .05,
+    cause: S(6) + .1, carr0: S(6) + .55, roll0: S(7), hit: S(7) + .85, hold0: S(8) + .15,
+    exp0: EN(8) + .1, head0: S(9) - .1, count0: S(9) + .15, land: S(9) + 1.85,
+    row0: S(10), row1: S(11), row2: S(12), sync0: S(12) + .6, pack0: EN(12) + .15,
+    tile0: S(13), tile1: S(14), tile2: S(15), tile3: S(16), out0: S(17) + .1, v2: S(17) + 1.6, take: 34.95,
+  };
+  for (const k in o) o[k] = q(o[k]);
+  Object.assign(o, {
+    flipStep: q(.25), dial1: q(o.dial0 + .5), arr1: q(o.arr0 + .45), seek2: q(o.seek1 + .8),
+    edit1: q(o.edit0 + .5), shift1: q(o.shift0 + .7), carr1: q(o.carr0 + .6), hold1: q(o.hold0 + 1.5),
+    exp1: q(o.exp0 + .9), head1: q(o.head0 + .45), sync1: q(o.sync0 + .4), pack1: q(o.pack0 + .5),
+    out1: q(o.out0 + .6), fallStep: q(.13), fallDur: q(.27),
+  });
+  o.effect = q(o.carr1 + .05); o.slots1 = q(o.pack0 + 1); o.syncTick = q(o.sync1 + .07);
+  return o;
+})();
+
+// One ground, one ink, one accent, one rare alarm (used once, for the drift).
+const C = { ground: '#f1ebdf', ink: '#16212b', mute: '#77796f', line: '#d3c9b5', card: '#fbf8f2', accent: '#2150d8', alarm: '#d8382a' };
+const SANS = '"Helvetica Neue",Helvetica,Arial,sans-serif', MONO = 'Menlo,"SF Mono",Consolas,monospace';
+const E = H.ease, lerp = H.lerp, pr = H.prog;
+const io = (t, a, b) => E.inOutCubic(pr(t, a, b)), out = (t, a, b) => E.outCubic(pr(t, a, b));
+const frac = x => ((x % 1) + 1) % 1;
+
+// ---------- drawing helpers ----------
+function text(s, x, y, px, col, o = {}) {
+  ctx.font = `${o.w || 700} ${px}px ${o.f || SANS}`; ctx.fillStyle = col;
+  ctx.textAlign = o.align || 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(s, x, y);
 }
-function timeline(u){
- const labels=['PICTURE','SOUND','CAPTIONS'];const cols=[C.blue,C.green,C.red];
- for(let j=0;j<3;j++){const y=380+j*150;text(labels[j],180,y+43,32,C.mute);line(470,y+25,1710,y+25,'#cad2d2',3);
-  for(let k=0;k<5;k++){const a=E.outCubic(P(u,.5+k*.18+j*.12,1.1+k*.18+j*.12));box(490+k*240,y-10,208*a,70,cols[j],9);}
- }
- const x=490+1190*P(u,.6,6.8);line(x,325,x,800,C.ink,4);box(x-58,290,116,42,C.ink,5);text('ONE CLOCK',x,319,18,'#fff','center');
+function width(s, px, f = SANS) { ctx.font = `700 ${px}px ${f}`; return ctx.measureText(s).width; }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, Math.max(0, Math.min(r, w / 2, h / 2))); }
+function fillR(x, y, w, h, r, col) { rr(x, y, w, h, r); ctx.fillStyle = col; ctx.fill(); }
+function strokeR(x, y, w, h, r, col, lw) { rr(x, y, w, h, r); ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.stroke(); }
+function poly(pts, col, lw) {
+  if (pts.length < 2) return;
+  ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  H.strokePath(ctx, pts); ctx.stroke();
 }
-function cause(u){
- const push=E.inOutCubic(P(u,1.2,3.0));frame(200+push*450,365,300,240,3.6);
- arrow(980,485,1200,485,P(u,2.3,3.1));
- const a=E.outCubic(P(u,3,3.6));ctx.globalAlpha=a;box(1270,365,380,240,C.green);text('RESULT',1460,475,60,'#fff','center');text('holds to be read',1460,545,30,'#fff','center',400);ctx.globalAlpha=1;
- text('CAUSE',350,755,42,C.blue,'center');text('EFFECT',1460,755,42,C.green,'center');
- text('move → explain → hold',960,875,46,C.mute,'center',400);
+function drawOn(pts, u, col, lw) { if (u > 0) poly(H.partial(pts, u), col, lw); }
+function arrowOn(pts, u, col, lw) {
+  if (u <= 0) return;
+  const p = H.partial(pts, u); poly(p, col, lw);
+  const k = H.smoothstep(.7, 1, u); if (k <= 0 || p.length < 2) return;
+  const [x, y] = p[p.length - 1], [px, py] = p[Math.max(0, p.length - 4)], a = Math.atan2(y - py, x - px), L = 34 * k;
+  poly([[x - L * Math.cos(a - .5), y - L * Math.sin(a - .5)], [x, y], [x - L * Math.cos(a + .5), y - L * Math.sin(a + .5)]], col, lw);
 }
-function tests(u){
- const names=['FRAME COUNT','COLOUR TAGS','AUDIO SYNC','LABEL BOUNDS'];
- for(let i=0;i<4;i++){const y=350+i*128,ok=u>1.1+i*.85;box(230,y,1460,98,'#fff',12);text(names[i],280,y+64,36,C.ink);box(1370,y+20,270,58,ok?C.green:'#e2e6e4',8);text(ok?'CHECKED':'WAIT',1505,y+60,30,ok?'#fff':C.mute,'center');}
+function alpha(a, fn) { if (a <= 0.001) return; ctx.save(); ctx.globalAlpha *= Math.min(1, a); fn(); ctx.restore(); }
+// A label landing: fades in fast, settles from below with a small overshoot.
+function land(t, t0, fn, dur = .3) {
+  const u = pr(t, t0, t0 + dur); if (u <= 0) return;
+  alpha(E.outCubic(Math.min(1, u * 1.8)), () => { ctx.translate(0, (1 - E.outBack(u)) * 26); fn(); });
 }
-function delivery(u){
- const names=['SOURCE','TIMING','MEDIA','CHECKS'];
- names.forEach((s,i)=>{const k=E.outCubic(P(u,.45+i*.3,1.05+i*.3)),x=210+i*395;ctx.save();ctx.translate(x,390+60*(1-k));ctx.globalAlpha=k;box(0,0,315,260,i===3?C.green:'#fff');text(String(i+1).padStart(2,'0'),32,76,54,i===3?'#fff':C.blue);text(s,32,205,32,i===3?'#fff':C.ink);ctx.restore();});
- text('REPRODUCIBLE BY THE NEXT TEAM',960,830,45,C.ink,'center');
+function scaleAt(cx, cy, s, fn) { ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); fn(); ctx.restore(); }
+const PAPER = () => H.paperTexture(1920, 1080, { seed: 7, tone: C.ground, fiber: .35, grain: .35, blotch: .25 });
+function ground(x = 0, w = 1920) { ctx.drawImage(PAPER(), x, 0, w, 1080, x, 0, w, 1080); }
+function check(x, y, s, u, col) { drawOn([[x, y], [x + s * .35, y + s * .35], [x + s, y - s * .45]], u, col, 9); }
+
+// The stage: a ball whose pose is a pure function of tau. Every thumbnail of "the film" uses it.
+function stage(r, tau, edge = C.ink, lw = 3) {
+  fillR(r.x, r.y, r.w, r.h, Math.min(18, r.h * .12), C.card); strokeR(r.x, r.y, r.w, r.h, Math.min(18, r.h * .12), edge, lw);
+  const fy = r.y + r.h * .86, br = Math.min(r.w, r.h) * .1;
+  poly([[r.x + r.w * .06, fy], [r.x + r.w * .94, fy]], C.line, Math.max(2, br * .1));
+  const pose = v => {
+    const tri = 1 - Math.abs(2 * frac(v / 2.4) - 1), hop = Math.abs(Math.sin(Math.PI * v / .8));
+    return [r.x + r.w * (.14 + .72 * tri), fy - br - hop * r.h * .5, hop];
+  };
+  // Onion skin: the frames just before this one, fading. A video is that sequence.
+  for (let k = 5; k >= 1; k--) {
+    const [x, y] = pose(tau - k * .07);
+    ctx.fillStyle = H.rgba(H.hex(C.accent), .1 * (1 - k / 6)); ctx.beginPath(); ctx.arc(x, y, br, 0, 7); ctx.fill();
+  }
+  const [bx, by, hop] = pose(tau);
+  ctx.fillStyle = 'rgba(22,33,43,.14)'; ctx.beginPath(); ctx.ellipse(bx, fy, br * (1.15 - .55 * hop), br * .22, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = C.accent; ctx.beginPath(); ctx.arc(bx, by, br, 0, 7); ctx.fill();
 }
-window.__renderFrame=(t)=>{
- ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
- const i=Math.min(4,Math.max(0,Math.floor(t/7.2))),u=t-i*7.2;
- box(0,0,1920,1080,C.paper,0);text('VIDEO / BY CODE',130,95,28,C.mute);text(`${String(i+1).padStart(2,'0')} / 05`,1790,95,28,C.mute,'right');
- text(TITLES[i],130,235,88,C.ink);line(130,280,1790,280,'#ccd2cf',2);
- [first,timeline,cause,tests,delivery][i](u,t);
- box(0,948,1920,132,C.ink,0);text(CAPTIONS[i][0],960,995,38,'#fff','center',400);text(CAPTIONS[i][1],960,1046,38,'#fff','center',400);
- box(0,940,1920*H.clamp(t/36,0,1),8,C.blue,0);
+
+// ---------- scene 1 + 2: the clock that becomes a timeline ----------
+const CARD = { w: 330, h: 248, y: 410, x: i => 85 + i * 355 };
+const STAGE = { x: 720, y: 185, w: 1100, h: 690 };
+const DIAL = { x: 300, y: 520, r: 165 };
+const AX = { x0: 440, x1: 1820, y: 240 }, sx = s => AX.x0 + s * 230;
+const LANE = { pic: 330, snd: 480, cap: 630, h: 120 };
+const HEAD = { x: 90, y: 118, px: 72 };
+
+function tau(t) { // the dial's time: plays, is seeked twice, then plays on
+  const e = io(t, T.zoom0, T.zoom1), live = lerp(1, t, e);
+  if (t < T.seek1) return live;
+  if (t < T.seek2) return lerp(T.seek1, 1, E.outCubic(pr(t, T.seek1, T.seek1 + .2)));
+  return lerp(1, 3.5, E.outCubic(pr(t, T.seek2, T.seek2 + .2))) + Math.max(0, t - T.seek2 - .2);
+}
+function boundary(t) { return 3.5 + io(t, T.shift0, T.shift1); } // the edited cut, in timeline seconds
+
+function sceneClock(t) {
+  const z = io(t, T.zoom0, T.zoom1), un = io(t, T.unroll0, T.unroll1);
+  // Headline: the hook claim, then it shrinks into the scene heading (gone by the unroll).
+  const hs = lerp(116, HEAD.px, z), hw = width('Every frame is a drawing.', hs);
+  // Film strip behind the cards: perforated ink band, slides in with them, leaves before the zoom.
+  const fs = E.outCubic(pr(t, -.35, .4)), fo = io(t, T.zoom0 - .15, T.zoom0 + .35);
+  if (fo < 1) alpha(1 - fo, () => {
+    const y0 = CARD.y - 58, h = CARD.h + 116, x0 = (1 - fs) * 1920;
+    ctx.fillStyle = C.ink; ctx.fillRect(x0, y0, 1920, h);
+    ctx.fillStyle = C.ground;
+    for (let x = x0 + 20 - frac(t * .8) * 70; x < 1920; x += 70) { fillR(x, y0 + 16, 34, 24, 5, C.ground); fillR(x, y0 + h - 40, 34, 24, 5, C.ground); }
+  });
+  alpha(1 - out(t, T.unroll0, T.unroll0 + .35), () => {
+    const s0 = t < T.hook ? 1.12 - .12 * E.outCubic(pr(t, 0, T.hook)) : 1;
+    scaleAt(960, 240, z > 0 ? 1 : s0, () => text('Every frame is a drawing.', lerp(960 - hw / 2, HEAD.x, z), lerp(270, HEAD.y, z) - 30 * out(t, T.unroll0, T.unroll0 + .35), hs, C.ink));
+  });
+  // Flip-book cards: slide in, flip one by one, then card 2 becomes the stage.
+  for (let i = 0; i < 5; i++) {
+    if (i === 2) continue;
+    const k = E.outCubic(pr(t, -.2 + i * .05, .45 + i * .05)), dx = (1 - k) * 1500 + Math.sign(i - 2) * 1300 * z;
+    if (z >= 1) continue;
+    alpha(1 - z, () => drawCard(t, i, CARD.x(i) + dx));
+  }
+  const k2 = E.outCubic(pr(t, -.1, .55)), sr = t < T.zoom0 ? null : rectLerp(cardRect(2), STAGE, z);
+  if (t < T.zoom0) drawCard(t, 2, CARD.x(2) + (1 - k2) * 1500);
+  else if (t < T.unroll0) stage(sr, tau(t));
+  // Dial, arrow, readout: draw on during "Each frame asks…", fade as the dial unrolls.
+  if (t >= T.dial0 && t < T.unroll1) drawDial(t, un);
+  if (t >= T.unroll0) drawTimeline(t, un);
+}
+function cardRect(i) { return { x: CARD.x(i), y: CARD.y, w: CARD.w, h: CARD.h }; }
+function rectLerp(a, b, u) { return { x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u), w: lerp(a.w, b.w, u), h: lerp(a.h, b.h, u) }; }
+function drawCard(t, i, x) {
+  const n = Math.floor((t - T.flip) / T.flipStep), on = t >= T.flip && n === i && t < T.zoom0;
+  const lift = on ? 10 : 0, r = { x, y: CARD.y - lift, w: CARD.w, h: CARD.h };
+  stage(r, i * .5, on ? C.accent : C.ink, on ? 7 : 3);
+  alpha(E.outCubic(pr(t, .35 + i * .05, .6 + i * .05)) * (1 - pr(t, T.zoom0, T.zoom0 + .1)),
+    () => text(`${(i * .5).toFixed(1)} s`, x + CARD.w / 2, CARD.y + CARD.h + 132, 48, on ? C.accent : C.ink, { f: MONO, align: 'center' }));
+}
+function drawDial(t, un) {
+  const d = DIAL, u = out(t, T.dial0, T.dial1), fade = 1 - pr(t, T.unroll0, T.unroll0 + .3), v = tau(t);
+  alpha(fade, () => {
+    if (un <= 0) {
+      const pts = []; for (let i = 0; i <= 96; i++) { const a = -Math.PI / 2 + i / 96 * Math.PI * 2; pts.push([d.x + Math.cos(a) * d.r, d.y + Math.sin(a) * d.r]); }
+      drawOn(pts, u, C.ink, 7);
+      for (let i = 0; i < 12; i++) {
+        if (u < i / 12) continue; const a = -Math.PI / 2 + i / 12 * Math.PI * 2;
+        poly([[d.x + Math.cos(a) * (d.r - 26), d.y + Math.sin(a) * (d.r - 26)], [d.x + Math.cos(a) * (d.r - 10), d.y + Math.sin(a) * (d.r - 10)]], C.ink, 4);
+      }
+    }
+    const a = -Math.PI / 2 + v / 2 * Math.PI * 2, hk = out(t, T.dial1 - .1, T.dial1 + .15);
+    poly([[d.x, d.y], [d.x + Math.cos(a) * d.r * .78 * hk, d.y + Math.sin(a) * d.r * .78 * hk]], C.accent, 9);
+    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(d.x, d.y, 12 * hk, 0, 7); ctx.fill();
+    const flash = Math.max(1 - pr(t, T.seek1, T.seek1 + .5), t >= T.seek2 ? 1 - pr(t, T.seek2, T.seek2 + .5) : 0) * (t >= T.seek1 ? 1 : 0);
+    land(t, T.dial1 - .1, () => text(`t = ${v.toFixed(2)} s`, d.x, 790, 56, flash > 0 ? C.accent : C.ink, { f: MONO, align: 'center' }));
+    arrowOn([[d.x + d.r + 18, d.y], [STAGE.x - 16, d.y]], out(t, T.arr0, T.arr1), C.accent, 8);
+    land(t, T.arr1, () => text('draw(t)', 594, 486, 48, C.accent, { f: MONO, align: 'center' }));
+    land(t, T.seek1 + .25, () => text('Any t, any order.', STAGE.x + 44, STAGE.y + 82, 52, C.ink));
+  });
+}
+function drawTimeline(t, un) {
+  // The dial's rim unrolls into the time axis.
+  const d = DIAL, pts = [];
+  for (let i = 0; i <= 96; i++) {
+    const a = -Math.PI / 2 + i / 96 * Math.PI * 2, w = E.inOutCubic(H.clamp(un * 1.25 - i / 96 * .25, 0, 1));
+    pts.push([lerp(d.x + Math.cos(a) * d.r, lerp(AX.x0, AX.x1, i / 96), w), lerp(d.y + Math.sin(a) * d.r, AX.y, w)]);
+  }
+  poly(pts, C.ink, lerp(7, 5, un));
+  if (un >= 1) for (let s = 0; s <= 6; s++) poly([[sx(s), AX.y - 14], [sx(s), AX.y + 14]], C.ink, 4);
+  // Heading change.
+  land(t, T.unroll1 - .3, () => text('One timeline.', HEAD.x, HEAD.y, HEAD.px, C.ink));
+  // The stage shrinks into shot A of the picture lane.
+  const b = boundary(t), lit = t >= T.sweep1, shots = [[0, 2], [2, b], [b, 6]];
+  const shotR = ([a, z]) => ({ x: sx(a) + 5, y: LANE.pic, w: sx(z) - sx(a) - 10, h: LANE.h });
+  stage(rectLerp(STAGE, shotR(shots[0]), un), tau(t) + .0);
+  [T.shotB, T.shotC].forEach((t0, j) => {
+    const u = pr(t, t0, t0 + .25); if (u <= 0) return; const r = shotR(shots[j + 1]);
+    alpha(u * 2, () => scaleAt(r.x + r.w / 2, r.y + r.h / 2, .6 + .4 * E.outBack(u), () => stage(r, t * (1 + j * .3) + j, lit && j === 0 ? C.accent : C.ink, lit && j === 0 ? 7 : 3)));
+  });
+  // Lane labels land beside what they label.
+  [['PICTURE', S(2), LANE.pic], ['SOUND', S(3), LANE.snd], ['CAPTIONS', S(4), LANE.cap]].forEach(([s, t0, y]) =>
+    land(t, q(t0), () => text(s, 90, y + 78, 48, C.ink)));
+  // Sound lane: waveform draws on; its hits sit on the cuts.
+  const wu = pr(t, T.wave0, q(T.wave0 + .6)), n = H.noise(3);
+  for (let x = AX.x0; x <= AX.x1; x += 7) {
+    if ((x - AX.x0) / (AX.x1 - AX.x0) > wu) break;
+    const s = (x - AX.x0) / 230; let a = 9 + 12 * Math.abs(n.n2(s * 3, .5));
+    for (const h of [0, 2, b]) if (s >= h) a += 44 * Math.exp(-(s - h) * 5);
+    const hot = lit && s >= 2 && s < 2.45;
+    poly([[x, LANE.snd + 60 - a], [x, LANE.snd + 60 + a]], hot ? C.accent : C.ink, 4);
+  }
+  // Caption lane: one pill per shot.
+  shots.forEach(([a, z], j) => {
+    const u = pr(t, q(T.pill + j * .12), q(T.pill + j * .12) + .2); if (u <= 0) return;
+    const x = sx(a) + 12, w = sx(z) - sx(a) - 24, hot = lit && j === 1;
+    alpha(u * 2, () => {
+      fillR(x, LANE.cap + 25, w, 70, 35, hot ? C.accent : C.ink);
+      fillR(x + 28, LANE.cap + 50, w * .55, 8, 4, C.card); fillR(x + 28, LANE.cap + 68, w * .35, 8, 4, C.card);
+    });
+  });
+  // Playhead: one clock across all three lanes.
+  const ph = lerp(0, 2.6, io(t, T.sweep0, T.sweep1)), px = sx(ph), g = out(t, T.unroll1, T.unroll1 + .35);
+  const wipeOut = 1 - pr(t, T.wipe0, T.wipe0 + .2);
+  alpha(wipeOut, () => {
+    poly([[px, AX.y], [px, AX.y + (LANE.cap + LANE.h + 10 - AX.y) * g]], C.accent, 6);
+    if (g > 0) { ctx.fillStyle = C.accent; ctx.beginPath(); ctx.moveTo(px - 16, AX.y - 22); ctx.lineTo(px + 16, AX.y - 22); ctx.lineTo(px, AX.y); ctx.fill(); }
+    land(t, T.unroll1, () => text(`t = ${ph.toFixed(2)} s`, px, AX.y - 34, 48, C.accent, { f: MONO, align: 'center' }));
+  });
+  // The edit: an arrow shows the cut moving one second, and all three lanes follow it.
+  if (t >= T.edit0) {
+    const bx = sx(b);
+    alpha(1 - pr(t, T.wipe0 - .3, T.wipe0), () => {
+      ctx.setLineDash([14, 12]); poly([[bx, LANE.pic - 14], [bx, LANE.cap + LANE.h + 14]], C.ink, 3); ctx.setLineDash([]);
+      arrowOn([[sx(3.5), 812], [sx(4.5), 812]], out(t, T.edit0, T.edit1), C.accent, 8);
+      land(t, T.edit1, () => text('+1 s', sx(4.5) + 28, 830, 52, C.accent, { f: MONO }));
+    });
+  }
+}
+
+// ---------- scene 3: cause, then effect ----------
+const BALL = { x0: 300, y: 640, r: 130 }, DOM = { x: j => 1000 + j * 128, w: 56, h: 360, base: 770 };
+const contactX = DOM.x(0) - DOM.w / 2 - BALL.r;
+function scene3(t) {
+  text('Cause, then effect.', HEAD.x, HEAD.y, HEAD.px, C.ink);
+  const push = 1 + .05 * io(t, T.roll0, T.exp0);
+  scaleAt(1000, 560, push, () => {
+    poly([[100, DOM.base], [1830, DOM.base]], C.ink, 4);
+    // Ball: rolls (accelerating), hits, rebounds a little.
+    const r = E.inQuad(pr(t, T.roll0, T.hit)), back = 34 * E.outCubic(pr(t, T.hit, T.hit + .4));
+    const bx = lerp(BALL.x0, contactX, r) - back, rot = (bx - BALL.x0) / BALL.r;
+    ctx.fillStyle = C.accent; ctx.beginPath(); ctx.arc(bx, BALL.y, BALL.r, 0, 7); ctx.fill();
+    ctx.strokeStyle = C.card; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(bx, BALL.y, BALL.r * .62, rot, rot + 1.4); ctx.stroke();
+    // Dominoes: each tips about its right foot; the last falls flat.
+    for (let j = 4; j >= 0; j--) {
+      const t0 = T.hit + j * T.fallStep, f = E.inQuad(pr(t, t0, t0 + T.fallDur)), ang = f * (j === 4 ? Math.PI / 2 : .42);
+      ctx.save(); ctx.translate(DOM.x(j) + DOM.w / 2, DOM.base); ctx.rotate(ang);
+      fillR(-DOM.w, -DOM.h, DOM.w, DOM.h, 6, C.ink); ctx.restore();
+    }
+    // Labels land on their objects; the arrow draws cause to effect.
+    alpha(1 - pr(t, T.hit - .2, T.hit + .1), () => land(t, T.cause, () => text('CAUSE', bx, BALL.y - BALL.r - 40, 60, C.ink, { align: 'center' })));
+    alpha(1 - pr(t, T.roll0 - .2, T.roll0 + .15), () => arrowOn(H.bezier([BALL.x0 + 110, 470], [520, 250], [800, 250], [DOM.x(0) - 70, 380], 48), out(t, T.carr0, T.carr1), C.accent, 8));
+    land(t, T.effect, () => text('EFFECT', DOM.x(2), 360, 60, C.ink, { align: 'center' }));
+    // Hold: the result stays long enough to read.
+    land(t, T.hold0, () => {
+      text('HOLD', 1000, 858, 52, C.ink);
+      const u = pr(t, T.hold0, T.hold1), done = u >= 1;
+      fillR(1160, 823, 470, 30, 15, C.line); fillR(1160, 823, 470 * u, 30, 15, done ? C.ink : C.accent);
+      text(`${(1.5 * u).toFixed(1)} s`, 1660, 858, 52, done ? C.ink : C.accent, { f: MONO });
+    });
+  });
+}
+
+// ---------- scene 4: check the exported file ----------
+const CARD4 = { x: 110, y: 190, w: 640, h: 360 };
+function thumb(r, tFrozen) { // the exported film, as a picture of scene 3
+  ctx.save(); rr(r.x, r.y, r.w, r.h, 4); ctx.clip();
+  ctx.translate(r.x, r.y); ctx.scale(r.w / 1920, r.h / 1080); ctx.drawImage(PAPER(), 0, 0); scene3(tFrozen); ctx.restore();
+  strokeR(r.x, r.y, r.w, r.h, 4, C.ink, 4);
+}
+function scene4(t) {
+  const e = io(t, T.exp0, T.exp1), r = rectLerp({ x: 0, y: 0, w: 1920, h: 1080 }, CARD4, e);
+  if (e < 1) { ctx.drawImage(PAPER(), 0, 0); }
+  ctx.fillStyle = 'rgba(22,33,43,.12)'; fillR(r.x + 12, r.y + 14, r.w, r.h, 4, 'rgba(22,33,43,.12)');
+  thumb(r, Math.min(t, T.exp0));
+  alpha(pr(t, T.exp1 - .2, T.exp1), () => { // play badge
+    ctx.fillStyle = 'rgba(251,248,242,.92)'; ctx.beginPath(); ctx.arc(r.x + r.w / 2, r.y + r.h / 2, 58, 0, 7); ctx.fill();
+    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.moveTo(r.x + r.w / 2 - 18, r.y + r.h / 2 - 28); ctx.lineTo(r.x + r.w / 2 + 30, r.y + r.h / 2); ctx.lineTo(r.x + r.w / 2 - 18, r.y + r.h / 2 + 28); ctx.fill();
+  });
+  // The file's label lands under it, then rises to become the heading.
+  const hk = io(t, T.head0, T.head1);
+  land(t, q(T.exp1 - .1), () => text('explainer.mp4', lerp(CARD4.x, HEAD.x, hk), lerp(625, HEAD.y, hk), lerp(52, HEAD.px, hk), C.ink, { f: MONO }));
+  if (t < T.count0 - .2) return;
+  // Frame counter: ticks at 10 per second, lands as the biggest hit of the film.
+  const steps = Math.floor((Math.min(t, T.land) - T.count0) / .1 + 1e-6), total = Math.round((T.land - T.count0) / .1);
+  const val = t >= T.land ? 1080 : Math.round(1080 * E.outQuad(Math.max(0, steps) / total));
+  const hit = t >= T.land, pk = 1 - E.outCubic(pr(t, T.land, T.land + .4));
+  alpha(pr(t, T.count0 - .2, T.count0), () => {
+    scaleAt(370, 700, hit ? 1 + .22 * pk : 1, () => text(String(val).padStart(4, '0'), 110, 790, 230, hit ? C.accent : C.ink));
+    if (hit && pk > 0) { ctx.strokeStyle = C.accent; ctx.lineWidth = 8 * pk; ctx.globalAlpha *= pk; ctx.beginPath(); ctx.arc(370, 700, 160 + 280 * (1 - pk), 0, 7); ctx.stroke(); }
+  });
+  land(t, T.land, () => text('frames · none missing', 114, 862, 46, C.ink, { w: 400 }));
+  // Checks: each row lands on its word; the sound row starts red, then snaps into sync.
+  const rows = [['Labels inside the frame', T.row0], ['Colours tagged BT.709', T.row1]];
+  rows.forEach(([s, t0], i) => {
+    const y = 300 + i * 150;
+    land(t, t0, () => { strokeR(870, y - 50, 66, 66, 10, C.ink, 4); text(s, 970, y, 54, C.ink); });
+    check(884, y - 20, 40, out(t, q(t0 + .3), q(t0 + .55)), C.accent);
+  });
+  const y = 600, sy = pr(t, T.sync0, T.sync1), ok = t >= T.sync1;
+  land(t, T.row2, () => {
+    strokeR(870, y - 50, 66, 66, 10, ok ? C.ink : C.alarm, 4);
+    alpha(1 - pr(t, T.sync1 - .1, T.sync1 + .1), () => text('Sound drifts +3 frames', 970, y, 54, C.alarm));
+    alpha(pr(t, T.sync1 - .1, T.sync1 + .1), () => text('Sound in sync', 970, y, 54, C.ink));
+    const off = 36 * (1 - E.inOutCubic(sy));
+    for (let x = 1000; x <= 1780; x += 130) {
+      poly([[x, 650], [x, 740]], C.ink, 4);
+      for (let k = 0; k < 9; k++) { const xx = x + off + k * 7, a = 34 * Math.exp(-k * .45); if (xx < 1800) poly([[xx, 695 - a], [xx, 695 + a]], ok ? C.accent : C.alarm, 4); }
+    }
+  });
+  check(884, y - 20, 40, out(t, T.syncTick, q(T.syncTick + .25)), C.accent);
+}
+
+// ---------- scene 5: save the system, rebuild the film ----------
+const TILE = [[110, 190], [510, 190], [110, 520], [510, 520]].map(([x, y]) => ({ x, y, w: 370, h: 300 }));
+const OUT = { x: 1010, y: 230, w: 800, h: 450 };
+function tile(t, i, t0) {
+  const r = TILE[i], u = pr(t, t0, t0 + .3); if (u <= 0) return;
+  const cx = r.x + r.w / 2;
+  alpha(u * 2.5, () => scaleAt(cx, r.y + r.h / 2, .85 + .15 * E.outBack(u), () => {
+    fillR(r.x, r.y, r.w, r.h, 16, C.card); strokeR(r.x, r.y, r.w, r.h, 16, C.ink, 4);
+    text(['SOURCE', 'TIMING', 'MEDIA', 'CHECKS'][i], cx, r.y + r.h - 32, 52, C.ink, { align: 'center' });
+    if (i === 0) { text('draw(t)', cx, r.y + 120, 64, C.accent, { f: MONO, align: 'center' }); fillR(cx - 120, r.y + 150, 240, 10, 5, C.line); fillR(cx - 120, r.y + 172, 160, 10, 5, C.line); }
+    if (i === 1) { for (let k = 0; k < 3; k++) { fillR(r.x + 40, r.y + 50 + k * 46, 120, 28, 8, C.ink); fillR(r.x + 170, r.y + 50 + k * 46, 160, 28, 8, C.ink); } poly([[r.x + 150, r.y + 36], [r.x + 150, r.y + 192]], C.accent, 6); }
+    if (i === 2) thumb({ x: r.x + 40, y: r.y + 30, w: 290, h: 163 }, T.exp0);
+    if (i === 3) for (let k = 0; k < 3; k++) { check(r.x + 60, r.y + 72 + k * 50, 26, 1, C.accent); fillR(r.x + 110, r.y + 62 + k * 50, 200, 14, 7, C.line); }
+  }));
+}
+function scene5(t) {
+  // Heading, and dashed slots that draw on before the parts arrive.
+  land(t, q(T.pack0 + .3), () => text('Save the system.', HEAD.x, HEAD.y, HEAD.px, C.ink));
+  const su = out(t, q(T.pack0 + .3), T.slots1);
+  ctx.setLineDash([16, 14]);
+  [...TILE, OUT].forEach(r => alpha(r === OUT ? 1 - pr(t, T.out1, T.out1 + .2) : 1,
+    () => drawOn([[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h], [r.x, r.y]], su, C.mute, 3)));
+  ctx.setLineDash([]);
+  [T.tile0, T.tile1, T.tile2, T.tile3].forEach((t0, i) => tile(t, i, t0));
+  // The parts rebuild the film; then the next version.
+  arrowOn(H.bezier([890, 340], [950, 340], [930, 455], [OUT.x - 16, 455], 32), out(t, T.out0, T.out1), C.accent, 8);
+  arrowOn(H.bezier([890, 670], [950, 670], [930, 455], [OUT.x - 16, 455], 32), out(t, T.out0, T.out1), C.accent, 8);
+  const ou = pr(t, T.out1, T.out1 + .3);
+  if (ou > 0) alpha(ou * 2.5, () => scaleAt(OUT.x + OUT.w / 2, OUT.y + OUT.h / 2, .9 + .1 * E.outBack(ou), () => stage(OUT, t - T.out1, C.ink, 5)));
+  const vk = pr(t, T.v2, T.v2 + .3);
+  alpha(1 - vk * 2, () => land(t, T.out1, () => { text('v1', OUT.x, 790, 72, C.ink, { f: MONO }); text('rebuilt from source', OUT.x + 120, 785, 46, C.ink, { w: 400 }); }));
+  land(t, T.v2, () => { text('v2', OUT.x, 790, 72, C.accent, { f: MONO }); text('the next one, better', OUT.x + 120, 785, 46, C.ink, { w: 400 }); });
+}
+
+// ---------- captions: phrase groups from VOICE, at most two lines, stable band ----------
+const CAP = { px: 46, max: 1640, top: 916 };
+const GROUPS = (() => {
+  const g = [];
+  VOICE.forEach(([s, e, txt, id], i) => { (g[id] = g[id] || { ids: [] }).ids.push(i); });
+  g.forEach((x, k) => {
+    const first = VOICE[x.ids[0]][0], last = VOICE[x.ids[x.ids.length - 1]][1], next = g[k + 1] ? VOICE[g[k + 1].ids[0]][0] : Infinity;
+    x.start = first - .1; x.end = Math.min(next - .1, last + .7, T.take + .35);
+  });
+  return g;
+})();
+function captionLines(gr) {
+  if (gr.lines) return gr.lines;
+  const words = []; gr.ids.forEach(i => VOICE[i][2].split(' ').forEach(w => words.push({ w, i })));
+  ctx.font = `700 ${CAP.px}px ${SANS}`; const sp = ctx.measureText(' ').width, lines = [[]]; let lw = 0;
+  for (const wd of words) {
+    wd.width = ctx.measureText(wd.w).width;
+    if (lines[lines.length - 1].length && lw + sp + wd.width > CAP.max) { lines.push([]); lw = 0; }
+    lw += (lines[lines.length - 1].length ? sp : 0) + wd.width; lines[lines.length - 1].push(wd);
+  }
+  if (lines.length > 2) throw new Error(`caption group needs ${lines.length} lines: split it`);
+  return (gr.lines = lines.map(ws => ({ ws, w: ws.reduce((a, b) => a + b.width, 0) + sp * (ws.length - 1), sp })));
+}
+function captions(t) {
+  poly([[110, CAP.top], [1810, CAP.top]], C.line, 2);
+  const gr = GROUPS.find(x => t >= x.start && t < x.end); if (!gr) return;
+  const a = Math.min(pr(t, gr.start, gr.start + .12), 1 - pr(t, gr.end - .15, gr.end)), lines = captionLines(gr);
+  const base = lines.length === 2 ? [982, 1040] : [1012];
+  alpha(a, () => lines.forEach((ln, j) => {
+    let x = 960 - ln.w / 2;
+    for (const wd of ln.ws) {
+      text(wd.w, x, base[j], CAP.px, t >= VOICE[wd.i][0] ? C.ink : 'rgba(22,33,43,.36)');
+      x += wd.width + ln.sp;
+    }
+  }));
+}
+
+// ---------- frame ----------
+window.__renderFrame = (t) => {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.setLineDash([]);
+  ground();
+  if (t < T.wipe1) sceneClock(t);
+  if (t >= T.wipe0 && t < T.exp0) {
+    // Transition 1: the playhead splits open onto the next scene.
+    const e = io(t, T.wipe0, T.wipe1), px = sx(2.6), xl = lerp(px, 0, e), xr = lerp(px, 1920, e);
+    ctx.save(); ctx.beginPath(); ctx.rect(xl, 0, xr - xl, 1080); ctx.clip(); ground(); scene3(t); ctx.restore();
+    if (e < 1) { poly([[xl, 0], [xl, 1080]], C.accent, 10); poly([[xr, 0], [xr, 1080]], C.accent, 10); }
+  }
+  if (t >= T.exp0) {
+    // Transition 2: the scene shrinks into the exported file (then packs away into a slot).
+    const pk = io(t, T.pack0, T.pack1);
+    alpha(1 - pk, () => { ctx.translate(-140 * pk, 140 * pk); scaleAt(430, 520, 1 - .55 * pk, () => scene4(t)); });
+    if (t >= T.pack0) scene5(t);
+  }
+  // Takeaway: the rest steps back; one line holds to the end.
+  const tk = pr(t, T.take, T.take + .25);
+  if (tk > 0) {
+    ctx.fillStyle = H.rgba(H.hex(C.ground), .9 * tk); ctx.fillRect(0, 0, 1920, CAP.top - 6);
+    land(t, T.take, () => text('Same code. Same film.', 960, 520, 124, C.ink, { align: 'center' }));
+    const w = width('Same film.', 124), x0 = 960 + width('Same code. Same film.', 124) / 2 - w;
+    drawOn([[x0, 560], [x0 + w, 560]], out(t, q(T.take + .1), q(T.take + .45)), C.accent, 12);
+  }
+  captions(t);
+  // Finishing passes at constant strength on every frame.
+  H.grain(ctx, t, { strength: .035, cell: 2, seed: 11 });
+  H.vignette(ctx, { strength: .22, inner: .6 });
 };
-window.__ready=document.fonts.ready;
-window.scoreSound=k=>{for(let i=0;i<5;i++)k.play('tock',i*7.2+.35,{gain:.12});};
+window.__ready = document.fonts.ready.then(() => { PAPER(); });
+
+// Sound: each effect sits on the frame of its event; draw sounds last as long as the draw.
+window.scoreSound = (k) => {
+  const p = (n, t, o = {}) => k.play(n, t, o);
+  p('whoosh', 0, { dur: .45, gain: .5 }); p('pop', T.hook, { gain: .6 });
+  for (let i = 0; i < 5; i++) p('tick', T.flip + i * T.flipStep, { gain: .5, minor: true });
+  p('swish', T.zoom0, { dur: T.zoom1 - T.zoom0, gain: .45 });
+  p('pencil', T.dial0, { dur: T.dial1 - T.dial0, gain: .55 });
+  p('stroke', T.arr0, { dur: T.arr1 - T.arr0, gain: .55 }); p('pop', T.arr1, { gain: .5 });
+  p('click', T.seek1, { gain: .9 }); p('click', T.seek2, { gain: .9 }); p('tock', q(T.seek1 + .25), { gain: .4, minor: true });
+  p('swish', T.unroll0, { dur: T.unroll1 - T.unroll0, gain: .45 });
+  [S(2), S(3), S(4)].forEach(x => p('pop', q(x), { gain: .5 }));
+  p('tock', T.shotB, { gain: .35, minor: true }); p('tock', T.shotC, { gain: .35, minor: true });
+  p('stroke', T.wave0, { dur: .6, gain: .4 });
+  for (let j = 1; j < 3; j++) p('blip', q(T.pill + j * .12), { gain: .4, minor: true });
+  p('swish', T.sweep0, { dur: T.sweep1 - T.sweep0, gain: .3 }); p('ding', T.sweep1, { gain: .45 });
+  p('stroke', T.edit0, { dur: T.edit1 - T.edit0, gain: .5 }); p('pop', T.edit1, { gain: .45 });
+  p('swish', T.shift0, { dur: T.shift1 - T.shift0, gain: .4 }); p('thud', T.shift1, { gain: .6 });
+  p('whoosh', T.wipe0, { dur: T.wipe1 - T.wipe0, gain: .55 });
+  p('pop', T.cause, { gain: .5 }); p('stroke', T.carr0, { dur: T.carr1 - T.carr0, gain: .5 }); p('pop', T.effect, { gain: .5 });
+  p('roller', T.roll0, { dur: T.hit - T.roll0, gain: .55 }); p('thud', T.hit, { gain: .8 });
+  for (let j = 0; j < 5; j++) p('click', q(T.hit + j * T.fallStep + T.fallDur), { gain: .7, minor: true });
+  p('pop', T.hold0, { gain: .4 }); p('tock', T.hold1, { gain: .55 });
+  p('swish', T.exp0, { dur: T.exp1 - T.exp0, gain: .45 }); p('pop', q(T.exp1 - .1), { gain: .45 });
+  p('swish', T.head0, { dur: T.head1 - T.head0, gain: .3 });
+  for (let x = T.count0; x < T.land - .1 - 1e-6; x += .1) p('count', q(x), { gain: .35, minor: true });
+  p('impact', T.land, { gain: .7 }); p('ding', T.land, { gain: .55 });
+  [T.row0, T.row1].forEach(x => { p('pop', x, { gain: .45 }); p('pencil', q(x + .3), { dur: .25, gain: .5 }); });
+  p('error', T.row2, { gain: .45 }); p('swish', T.sync0, { dur: T.sync1 - T.sync0, gain: .35 });
+  p('pencil', T.syncTick, { dur: .25, gain: .5 }); p('success', T.syncTick, { gain: .35 });
+  p('swish', T.pack0, { dur: T.pack1 - T.pack0, gain: .4 }); p('pencil', q(T.pack0 + .3), { dur: T.slots1 - q(T.pack0 + .3), gain: .4 });
+  [T.tile0, T.tile1, T.tile2, T.tile3].forEach(x => p('thud', x, { gain: .5 }));
+  p('stroke', T.out0, { dur: T.out1 - T.out0, gain: .5 }); p('pop', T.out1, { gain: .5 }); p('select', T.v2, { gain: .45 });
+  p('bell', T.take, { gain: .3 }); p('stroke', q(T.take + .1), { dur: .35, gain: .4 });
+};
 </script><script src="../lib/player.js"></script></body></html>

@@ -1,6 +1,6 @@
 # Recipe: a 36-second narrated explainer
 
-**Result:** five authored scenes, 1920×1080, 30 fps, 1080 frames; phrase captions,
+**Result:** one continuous film in five narrated sections, 1920×1080, 30 fps, 1080 frames; phrase captions,
 procedural emphasis sounds and an external narration WAV. This is a reproducibility
 exercise, not an approved commercial voice or a topic-to-film automation service.
 
@@ -33,8 +33,12 @@ node starter/render.mjs examples/narrated-explainer.html \
   --stills 3,10.2,17.4,24.6,31.8 --outdir "$PROD/stills"
 ```
 
-The page has five 7.2-second scenes: absolute-time drawing, shared timeline, cause and
-effect, verification, and delivery. Captions are two authored lines in a reserved strip.
+The page covers five narrated sections (absolute-time drawing, shared timeline, cause and
+effect, verification, delivery) as one continuous film: objects persist and transform between
+sections, with two designed transitions. Its `VOICE` table holds phrase times measured from the
+generated narration (the page comments give the `silencedetect` command to re-measure them for
+another voice); captions are phrase groups of at most two lines in a fixed band, with spoken
+words in ink and the rest dimmed. Re-measure the table whenever the voice changes.
 Inspect the longest caption and the large headings at 100% and at a reduced 640×360 size.
 The HTML preview plays page effects; the external voice is mixed only during export.
 
