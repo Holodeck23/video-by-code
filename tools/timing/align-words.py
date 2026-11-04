@@ -37,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import ToolError, decode, guard_outputs, main_guard, need_file, read_json, write_json  # noqa: E402
 
 SR = 22050
-GANG_PAT = re.compile(r"^(i did,\s*i did,\s*i did|i did|not me|all of them|only me)$", re.I)
+GANG_PAT = None  # set from --gang-pattern; None disables gang-vocal snapping
 
 
 def norm(w: str) -> str:
@@ -208,11 +208,12 @@ def align_acoustic(cues: list[dict], y, bpm: float, phase: float) -> list[dict]:
         else:
             span = min(max_win, 0.38 * len(c["text"]))
 
-        is_gang = bool(GANG_PAT.match(c["text"].strip()))
+        is_gang = bool(GANG_PAT and GANG_PAT.match(c["text"].strip()))
         ws = []
-        if is_gang and len(words) == 6:
-            pair_span = span / 3.0
-            for p_idx in range(3):
+        if is_gang and len(words) >= 2 and len(words) % 2 == 0:
+            n_pairs = len(words) // 2
+            pair_span = span / n_pairs
+            for p_idx in range(n_pairs):
                 p_start = snap_16th(t0 + p_idx * pair_span)
                 p_mid = max(round(p_start + sixteenth, 3), snap_16th(p_start + max(sixteenth, pair_span * 0.36)))
                 p_end = max(round(p_mid + sixteenth, 3), snap_16th(p_start + pair_span * 0.92))
@@ -252,8 +253,11 @@ def main() -> int:
     ap.add_argument("--phase", type=float, default=0.0, help="Beat phase in seconds for --backend acoustic")
     ap.add_argument("--window", type=float, default=30.0, help="Max seconds after cue start to accept a Whisper match")
     ap.add_argument("--offset", type=float, default=0.0, help="Seconds to subtract from all aligned timestamps")
+    ap.add_argument("--gang-pattern", help="Regex (case-insensitive) matching whole lines of stacked/shouted gang vocals, e.g. \"^(yes we did|not me)$\"; their word pairs snap to the 16th-note grid (acoustic backend)")
     ap.add_argument("--force", action="store_true")
     a = ap.parse_args()
+    global GANG_PAT
+    GANG_PAT = re.compile(a.gang_pattern, re.I) if a.gang_pattern else None
 
     guard_outputs([a.output], a.force)
     audio_path = need_file(a.audio, "audio")

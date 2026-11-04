@@ -74,34 +74,46 @@ Synthesised with Web Audio only. No audio files.
 
 ## 4. `FEATURES` audio-analysis & lyric loader (`lib/features.js`, global `window.FEATURES`)
 
-Loads offline stem analysis (`analysis.json` + binary `features.f32` from `tools/timing/analyze-stems.py`) and word-aligned lyrics/captions (`words.json` from `tools/timing/align-words.py`) for deterministic frame lookup at any timestamp `t`:
+Loads offline analysis (`analysis.json` + binary `features.f32` from `tools/timing/analyze-stems.py`) and word timing (`words.json` from `tools/timing/align-words.py`) so any frame can look up audio facts at absolute time `t`.
 
-- `await FEATURES.load(analysisJsonUrl, featuresBinUrl)` returns feature controller `f`:
-  - `f.cursorAt(t, out)`: writes interpolated 120 Hz stem channels (`full`, `drums`, `bass`, `guitar`, `piano`, `other`, `vocals`, each with `.level`, `.env`, `.onset`, `.bright`), plus `beatPhase`, `barPhase`, `beatIdx`, `barIdx`, `isDownbeat`, `inSilence`, `section`, and monotone musical time `tau` into `out`.
-  - Auto-gates absent Demucs stems (`span < 0.04`) to `0` so stem bleed never triggers visual transients.
-  - `f.sinceLast(name, t)`: seconds elapsed since the most recent refractory-gated onset peak on channel `name`.
-  - `f.pulseAt(name, t, attack = 0.012, decay = 0.22)`: shaped `[0..1]` transient envelope for channel `name` at time `t`.
-  - `f.tau(t)`: strictly non-decreasing musical time integral.
-- `await FEATURES.loadLyrics(wordsJsonUrl)` returns `{ lines, words, duration }`:
-  - Applies `FEATURES.fixFirstWord(data, maxDur = 0.45)` automatically so pre-vocal silence is never attached to word 0.
-  - `FEATURES.lineAt(lyrics, t, { leadIn = 0.18, tailOut = 0.35 })` returns `{ active, prev, next, word, wordIndex, lineProgress, wordProgress }`.
+- `await FEATURES.loadAnalysis(baseUrl)` fetches `${baseUrl}/analysis.json` and the feature file it names. It rejects any dtype other than `float32-le`, any layout other than `[feature][frame]`, and a binary whose byte length differs from `names x frames x 4`. It returns `f`:
+  - `f.sample(name, t)`: linear interpolation of curve `name` (for example `'drums.env'`, `'tau'`, `'bar.phase'`) at the control rate; clamps to the first/last value.
+  - `f.norm(stem, kind, t)`: the stem's `level` or `env` (`kind`) scaled 0..1 between its 5th and 98th percentile. A stem whose 98th-5th percentile span is under 0.04 counts as absent separation residue and always returns 0, so its visual layer stays empty.
+  - `f.gains[stem]`: `{ floor, ceil, span, present, envFloor, envCeil }`.
+  - `f.onsets[stem]`: onset times (threshold 0.45, 70 ms refractory) for present stems; empty for absent ones.
+  - `f.beats`, `f.downbeats` (`Float64Array`), `f.silences` (`[{start, end, dur}]`), `f.inSilence(t)` (the silence containing `t`, or `null`).
+  - `f.cursorAt(events, t)`, `f.sinceLast(events, t)`, `f.pulseAt(events, t, halfLife = 0.12)`: the event helpers below, re-exported.
+  - `f.curves`, `f.rate`, `f.frames`, `f.duration`, `f.analysis`: raw access.
+- Event helpers (pure functions of `t`, also on `FEATURES`):
+  - `FEATURES.cursorAt(events, t)`: index of the last event at or before `t` (binary search), or -1.
+  - `FEATURES.sinceLast(events, t)`: seconds since that event, or `Infinity`.
+  - `FEATURES.pulseAt(events, t, halfLife = 0.12)`: `exp(-dt / halfLife)` decay from the latest event; 0 before the first.
+- `await FEATURES.loadLyrics(urlOrBase)` loads `words.json` (or `${base}/words.json`) and returns `{ lines, byId, matched, total }`. Each line is `{ id, i, text, start, end, words: [{ w, start, end, src }] }`, sorted by start. `FEATURES.fixFirstWord` is applied to every line: a first word longer than 0.7 s has its start moved to 0.45 s before its end (trims Whisper's stretch across preceding silence).
+- `FEATURES.lineAt(lyrics, t, lead = 0.25, tail = 0.6)`: the line active at `t` (shown `lead` s early, held `tail` s late), or `null`.
+- `FEATURES.STEMS`: the stem names the analyzer writes.
 
 ## 5. `INK` hand-drawn doodle & camera plate kit (`lib/ink-doodle.js`, global `window.INK`)
 
-Deterministic whiteboard/notebook drawing and Ken Burns plate camera helpers:
+Deterministic marker-doodle drawing and an image-plate camera. Output depends only on shape, seed, boil frame and progress `p`, so any frame seeks cleanly.
 
-- `INK.setBoil(t, seed = 1)`: quantizes hand-drawn wobble phase to 8 fps (`floor(t * 8)`).
-- Primitives: `INK.line(ctx, x1, y1, x2, y2, opts)`, `INK.curve(ctx, pts, opts)`, `INK.box(ctx, x, y, w, h, opts)`, `INK.circle(ctx, cx, cy, r, opts)`, `INK.under(ctx, x, y, w, opts)`, `INK.arrow(ctx, x1, y1, x2, y2, opts)`, `INK.thought(ctx, cx, cy, rx, ry, opts)`.
-- `INK.marker(ctx, text, x, y, opts)`: ALL-CAPS marker typography with left-anchored write-on (`u` in `0..1`) so centered labels never shift horizontally while typing on.
-- `INK.plate(ctx, img, tLocal, dur, cam, opts)`: cover-fit Ken Burns camera with normalized Points of Interest (`fx, fy` in `0..1`), zoom, roll, pan (`k0 -> k1`), `INK.glow`, and `INK.flicker`.
+- `INK.setBoil(t)`: sets the line-boil state to `floor(t * 8) % 3` (lines re-jitter 8 times a second across 3 states). Call once at the top of each frame.
+- `INK.shape(ctx, pts, { fill = null, w = 6, color = INK.C.ink, p = 1, seed = 1, amp = 2.2, closed = true })`: the core wobbly stroke; `p` (0..1) draws it on by length.
+- Built on `shape`: `INK.line(ctx, x0, y0, x1, y1, opts)`, `INK.poly(ctx, pts, opts)`, `INK.circle(ctx, cx, cy, r, opts)`, `INK.ellipse(ctx, cx, cy, rx, ry, opts)`, `INK.rect(ctx, x, y, w, h, opts)`; `INK.ellipsePts(cx, cy, rx, ry, a0 = -1.9, turns = 1.04, n = 56)` returns the hand-closed ellipse points; `INK.dot(ctx, x, y, r, color)`.
+- `INK.marker(ctx, text, x, y, { size = 88, font, color, outline = null, p = 1, tilt = -0.015 })`: marker lettering written on left to right by `p`.
+- `INK.arrow(ctx, fx, fy, x, y, label, { p = 1, color, seed = 9, size = 54 })`: an arrow from `(fx, fy)` to `(x, y)`; the head draws in the last 30% of `p`, the optional label fades in from 40%.
+- `INK.thought(ctx, x, y, w, h, tx, ty, { p = 1, seed = 5, fill })`: a thought cloud with trailing bubbles toward `(tx, ty)`.
+- `INK.plate(ctx, img, t, t0, t1, a, b = a)`: cover-fits `img` to the canvas and moves the camera from `a` to `b` (`{ z, x, y }`: zoom and focus point, in image pixels or 0..1 when both are <= 1) over `[t0, t1]` with smoothstep; never shows past the image edge. Returns `(px, py) => [sx, sy, scale]` to place overlays on image features.
+- `INK.glow(ctx, x, y, r, colorTemplate, a)`: additive radial glow; `colorTemplate` is an `rgba()` string with `A` where the alpha goes.
+- `INK.flicker(t, seed = 0)`: deterministic lamp intensity around 0.75.
+- Also exported: `INK.C` (palette), `INK.clamp`, `INK.ease` (cubic out), `INK.smooth` (smoothstep), `INK.wobble(pts, seed, amp = 2.2)`.
 
-## 6. Three.js WebGL post-processing pipeline (`lib/webgl-post.js`, ES module `createPost`)
+## 6. Three.js WebGL post-processing pipeline (`lib/webgl-post.js`, ES module)
 
-4-stage deterministic composer (`RenderPass -> FxOverShader -> UnrealBloomPass -> FinalGradeShader`) for Three.js scenes:
+Exports `FxOverShader`, `FinalGradeShader` and `createPost`.
 
-- `createPost(THREE, { EffectComposer, RenderPass, ShaderPass, UnrealBloomPass }, renderer, scene, camera, width, height)` returns `{ composer, fxOver, bloom, finalPass, setSize(w, h), update(params), render() }`.
-- `FxOverShader`: selective warm/saturated HDR push so neutral white typography does not bloom.
-- `FinalGradeShader`: ACES tone mapping with light-ground `paperMode` soft-knee bypass, luma-only impact inversion (`col + (1 - 2Y)`), radial chromatic aberration, hash-band glitch, camera shake, deterministic 2×2 film grain, scanlines, vignette, and crisp 2D UI overlay texture (`tUI`).
+- `createPost(THREE, { EffectComposer, RenderPass, ShaderPass, UnrealBloomPass }, renderer, world, fxCanvas, uiCanvas, width = 1920, height = 1080)` where `world` is `{ scene, camera }`, `fxCanvas` is a 2D canvas whose warm/saturated pixels are pushed into HDR (accent glow), and `uiCanvas` is a 2D canvas composited crisp on top after grading. Pipeline: RenderPass (half-float target, 4x MSAA) -> FxOver -> UnrealBloom (strength 0.5, radius 0.4, threshold 1.0) -> FinalGrade.
+- Returns `{ composer, bloom, over, fin, render }`. Call `render(params)` once per frame; every parameter is optional: `fxGain` (2.0), `paperMode` (false: skip ACES and roll off highlights for light grounds), `bloom` (0.5), `frame` (grain seed; pass the frame index), `ca` (0.002 chromatic aberration), `glitch` (0) and `glitchSeed`, `shake` (`[x, y]`, always a two-number array), `flash` (0), `lumaInvert` (0..1, luma-only inversion `col + (1 - 2Y)` that keeps the accent hue), `exposure` (1.0), `grain` (0.07, 2x2-pixel), `vignette` (0.9), `fade` (1.0).
+- Both canvases are uploaded every `render()`; draw them before calling it.
 
 ## 7. Renderers (`starter/render.mjs` & `tools/render/`)
 
