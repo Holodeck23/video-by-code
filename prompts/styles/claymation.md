@@ -64,12 +64,12 @@ Everything above is static. Per frame you only draw props, the lens passes and g
 ## Diagrams: arrows, labels, charts
 - Arrow: a clay coil that pops on (squash, see Motion) anchored at its tail. Cream by default, red when it means "go back and fix".
 - Label: clay letters set beside or under the thing, never touching it, in that thing's colour. Sticker-like cards are slabs of cream clay with the label letters pressed on, baked into one sprite.
-- Chart: bars are rounded slabs (width 105px, radius 33px, height = value * 5.1px) standing on the table with a contact shadow, alternating yellow and sky; the last bar takes the accent colour. Bars rise with a squash-and-stretch rise from the table: five poses held 1/12 s each, 0.25 s between bars, anchored at the base: nearly flat and wide (1.25 across, 0.2 tall), then 1.12 by 0.55, overshoot to 0.95 by 1.08, settle at 1.03 by 0.97, rest at 1 by 1.
+- Chart: bars are rounded slabs (width 105px, radius 33px, height = value * 5.1px) standing on the table with a contact shadow, alternating yellow and sky; the last bar takes the accent colour. Bars rise with a squash-and-stretch rise from the table: four poses each held 1/6 s then rest, 0.25 s between bars, anchored at the base: nearly flat and wide (1.25 across, 0.2 tall), then 1.12 by 0.55, overshoot to 0.95 by 1.08, settle at 1.03 by 0.97, rest at 1 by 1.
 - Wrong: a red clay X (stroke 42px, round caps, 130px square) slapped on tilted 0.1 rad, and its host shakes sideways +-13px, flipping direction every tick for 0.5 s. Right: a green check (stroke 39px, 3 points) set on in the same spot.
 
 ## Motion
 - Master clock: `tq = Math.floor(t*12)/12`. Every position, scale and sprite choice is computed from `tq`, so the picture is held for two or three render frames and then jumps. Use `H.ease` only to decide a target, then quantise it to 4-6 steps.
-- Pop-on: five poses of 1/6 s each, anchored at the piece's base: a small dot (half width, 0.42 tall), a wide splat (1.16 across, 0.8 tall), a stretch (0.9 across, 1.14 tall), a small rebound (1.04 by 0.97), then rest at 1 by 1.
+- Pop-on: four poses of 1/6 s each (0.67 s in all), anchored at the piece's base: a small dot (half width, 0.42 tall), a wide splat (1.16 across, 0.8 tall), a stretch (0.9 across, 1.14 tall), a small rebound (1.04 by 0.97), then rest at 1 by 1.
 - Leave by falling: `dy = 3600*d²`, `d` = time since release + 1/12 s, rotation = `(seedHash - 0.5) * d * 5`; drop it once dy > 1350. Letters of one word are released 1/24 s apart.
 - Leave by sliding: `dx = +-3900*d²`, same clock, so heavy pieces shove off like they were pushed.
 - Resting life ("boil"): the fine skin noise offset moves every third frame (3 cached variants), and small pieces hop 5-8px on alternate ticks while they travel across the table.
@@ -99,7 +99,7 @@ A "plop" is the base voice (helper): `k.tone(t, {f: 270, glideTo: 120, dur: 0.11
 - bed or music: `k.bed(0, DURATION, {kind: 'room', gain: 0.45})`. No music.
 
 ## Signature moves
-- Pop-on with squash-and-stretch, five poses, every piece.
+- Pop-on with squash-and-stretch, four poses then rest, every piece.
 - Letters knocked off one by one and falling out of frame.
 - Numbers re-pressed from fresh clay digits on the 12 fps tick.
 - Red clay X slapped on while the bubble shakes.

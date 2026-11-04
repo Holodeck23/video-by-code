@@ -64,7 +64,7 @@ Everything is drawn white on the source canvas with `shadowColor #fff, shadowBlu
 - Easing: `H.ease.inOutCubic` for rolls and scrolls; typing and draw-on are linear.
 - Pace: 1.5-4 s of reading time per screen; things appear typed or drawn, never faded in.
 - Phase scroll: the text block shifts up 450px over 0.5 s to make room, the question dropping into the status line.
-- Between beats: cursor blink, a hum bar crossing the glass (its centre climbs 0.18 glass-heights per second and wraps on a 1.3-height cycle that starts 0.15 below the glass), a flicker of +-2% at about 14 Hz, the trace jitter.
+- Between beats: cursor blink, a hum bar crossing the glass (its centre climbs 0.18 glass-heights per second and wraps on a 1.3-height cycle that starts 0.15 below the glass), a whole-tube gain flicker of +-2.5% as `sin(t*2*PI*13)` (keep it off multiples of the frame rate, or it aliases to nothing), the trace jitter.
 
 ## Scene changes
 V-hold roll: the current screen slides up by glassHeight + 90px while the next rises from below, `H.ease.inOutCubic`, 0.45 s; a 96px black blanking bar rides the seam. Use it once per major phase. Inside a phase, scroll or clear lines instead; never dissolve. Opening: power-on (below).
@@ -74,7 +74,7 @@ V-hold roll: the current screen slides up by glassHeight + 90px while the next r
 ## Finishing passes (run every frame, same strength)
 1. Bloom from the source: blur 4.5px at quarter size plus blur 6px at eighth size added with `lighter` at 0.9; sampled into the output as `glow * 0.85`.
 2. Per-pixel warp with the tube coordinates (u, v in -1..1, r2 = u*u + v*v): sample at `(u,v) * (1 + 0.065*r2)`, scaled 0.985 and 0.99; red reads at `+0.0016*r2*2.2` further out, blue the same amount further in. The lookup table never changes, so compute it once.
-3. Scanlines belong to the pre-warp image, so the curvature bends them: `0.42 + 0.58*cos(PI*sy/4)^2`, `sy` in source pixels.
+3. Scanlines belong to the pre-warp image, so the curvature bends them: `0.42 + 0.58*cos(PI*sy/4.5)^2` (a 4.5px period), `sy` in source pixels.
 4. Hum bar: x `1 + 0.07*exp(-((sy - humY)/105)^2)`.
 5. Phosphor tint: `R = 7 + (0.2*r^1.6)*255`, `G = 13 + min(1.15, g)*235`, `B = 9 + (0.34*b^1.6)*255`; hot cores drift toward white-green above 0.8. Vignette factor `clamp(1 - r2*0.28)^1.4` on top.
 6. Glass: radial edge darkening to rgba(0,0,0,0.55); soft top-left sheen 0.07; a blurred 54px window reflection patch at 69-90% of the width, peak 0.04; a 4.5px specular arc along the top, rgba(255,255,255,0.12), blur 3px.

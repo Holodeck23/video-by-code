@@ -63,13 +63,13 @@ Details (an inset stitch rectangle, a face, a vein) go on top as thread.
 - Emphasis ring: a wobbly ellipse in blanket stitch, red, sewn around the thing over 0.5s.
 - Wrong: a satin X (two 120px diagonals, 21px wide), second stroke 0.1s after the first. Right: a satin check in #4f9a52.
 - Chart: axis as dark running stitch; bars are felt rectangles 93px wide, 135px pitch, height = value x 5.4px, alternating mustard and sage, final bar coral, an inset 12px cream stitch rectangle on each; a ten-point felt star (radii 90/39px) on the peak.
-- Adjusting a button-weight: rotate its thread X by 1.1-1.6 rad over 0.7s with `H.ease.inOutCubic`.
+- Changing a button's value (a dial, a setting, a weight): rotate its thread X by 1.1-1.6 rad over 0.7s with `H.ease.inOutCubic`.
 
 ## Motion
 - Drop-on: 0.45s. `u = H.prog(t, st, st+0.45)`, `lift = 1 - H.ease.outQuad(u)`: scale `1 + 0.14*lift`, y `-45*lift`, alpha `min(1, 5u)`, shadow blur `15 + 39*lift`, offset `(6 + 27*lift, 9 + 39*lift)`, alpha `0.45 - 0.2*lift`. From u 0.45 to 1 squash `0.04*sin(pi*(u-0.45)/0.55)` wider and shorter. It touches down at `st + 0.2`.
 - Buttons pop on with `H.ease.outBack` from scale 0.15, 0.35s, 0.07-0.1s apart.
 - Thread is sewn by length at a steady pace (about 0.12s per stitch); never fades in.
-- Pieces riding a stitched path move at about 960px/s, bob by rotating `sin(t*6+i)*0.03`, and shrink to nothing over the final 195px as the receiver swallows them.
+- Pieces riding a stitched path move at about 960px/s, bob by rotating `sin(t*6+i)*0.03`, and shrink to nothing over the final 195px as the target takes them in.
 - Camera: pans 0.7s with `H.ease.inOutCubic`, distance about 1900px; the quilt breathes in between (see Ground). The header tag shrinks to the top-left corner after the first pan.
 - A wrong answer shakes sideways `sin(t*70)*10`px for 0.45s.
 
@@ -99,7 +99,7 @@ Define `fump(t, g, pan)`: `k.noise(t, {pan, a: 0.006, color: 'brown', dur: 0.09,
 - Blanket stitch sewn round a shape, spoke by spoke.
 - Buttons joined by a net of red running stitch that knits itself.
 - A digit counter whose felt tiles are re-cut.
-- A weight-button whose thread X rotates when it changes.
+- A button whose thread X rotates when its value changes.
 - The quilt breathing: seams deepen and relax under the whole scene.
 
 ## Pitfalls

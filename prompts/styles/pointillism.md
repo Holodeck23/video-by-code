@@ -24,7 +24,7 @@ Thirteen pigments, all used pure. There is no black and no grey: darks are blues
 | Cool mid | #4a92d6 | cerulean; skies, water, glints of cool |
 | Dab shadow | rgba(52,38,74,0.42) | a hard shadow under every dab |
 
-Complement table (index of the opposite pigment), used for the "vibration": lemon-violet, orange-cerulean or ultramarine, vermilion-emerald, rose-yellow-green, viridian-vermilion, ochre-ultramarine, deep ultramarine-ochre, lead white-itself.
+Complement table, used for the "vibration" (pigment: its opposite): lead white: lead white; lemon: violet; orange: cerulean; vermilion: emerald; rose: yellow-green; violet: lemon; ultramarine: orange; cerulean: orange; emerald: rose; yellow-green: violet; viridian: vermilion; ochre: ultramarine; deep ultramarine: ochre. Keep it as a 13-entry array indexed by pigment.
 
 ## Ground and surface
 1. Canvas, cached with `H.offscreen`: fill #e8dec6, then 1px horizontal threads every 4px in #968264 at 16% alpha and vertical threads every 4px at 10%.
@@ -52,7 +52,7 @@ The per-dab stable term in `cost` replaces random noise so the field is identica
 **Rendering dabs.** Group dabs by pigment; for each pigment build ellipses in chunks of 600 sub-paths and fill each chunk once, with `shadowColor` rgba(52,38,74,0.42) and shadow offset (1.8, 2.4), so every dab throws a hard small shadow toward the lower right (light from the upper left). Optional relief pass: lighten the upper-left rim of each dab by 20% and darken the lower-right rim by 17%.
 
 **Fine dabs** (text, arrows, rings, numbers): the same medium with a smaller, round-ish brush.
-- Letter dabs: rasterise each glyph once (cached per character and size), sample it on a grid of step `max(2, size/30)` px with +-0.75px jitter, keep samples with alpha above 110, radius `step * rng.range(0.72, 0.92)`. Each dab picks a pigment at random from a mix: ink mix `[ultramarine x4, deep ultramarine x2, violet, ultramarine, vermilion-free]`, red mix `[vermilion x3, orange, rose, vermilion]`, green mix `[emerald x2, deep viridian x2, yellow-green, violet-free]`, gold mix `[lemon x2, orange, white, ochre]` (pick by index, no fixed order).
+- Letter dabs: rasterise each glyph once (cached per character and size), sample it on a grid of step `max(2, size/30)` px with +-0.75px jitter, keep samples with alpha above 110, radius `step * rng.range(0.72, 0.92)`. Each dab picks a pigment at random from a mix, a list where repeats set the odds: ink mix `[ultramarine x5, deep ultramarine x2, violet, vermilion]` (one dab in nine is a red spark), red mix `[vermilion x4, orange, rose]`, green mix `[emerald x2, viridian x2, ultramarine, yellow-green]`, gold mix `[lemon x2, orange, lead white, ochre]`. Pick by `r.int` into the list per dab, never in a fixed order, so text looks speckled rather than striped.
 - Path dabs: every 3.6px along a path place `max(1, round(width/3.6))` dabs across its width, offset jitter +-1px, radius 1.6-2.2px, pigment from the colour mix.
 - Arrow head: two arms at +-0.55 rad from the reverse direction, length `3.2 x width`, a dab every 3.3px, two per step.
 - Ring: an ellipse path starting at -0.6 rad running 1.08 turns (overshoots its start), 50 points, 10px wide.

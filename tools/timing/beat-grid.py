@@ -12,7 +12,8 @@ Usage:
 Steps:
   1. librosa onset envelope + beat tracker -> detected beats.
   2. --constant: fit one BPM and phase by linear regression (beat time = phase + k * period,
-     k the integer beat index). Re-index and refit twice, drop outliers (> 1/4 beat), refit.
+     k the integer beat index). Re-index and refit twice, drop outliers (> 1/4 beat), refit,
+     then slide the phase +-60 ms onto a fine (~3 ms hop) onset envelope.
      Reports the RMS residual in ms. Use it for machine-made or click-tracked music, which
      does not drift; do not use it for live playing that drifts.
   3. Downbeat phase: which of the --meter beat offsets is "beat 1".
@@ -60,6 +61,19 @@ def fit_constant(det, np):
     k = np.round((det - phase) / period)
     res = det[keep] - (phase + k[keep] * period)
     return period, phase, float(np.sqrt(np.mean(res ** 2)) * 1000), int((~keep).sum())
+
+
+def refine_phase(y, period: float, phase: float, dur: float, np, librosa, span: float = 0.06) -> float:
+    """Slide the fitted grid +-span s over a fine (hop 64, ~3 ms) onset envelope and keep the
+    shift with the most onset energy under the grid. librosa's coarse hop puts beats ~1 hop
+    (~23 ms) late; this pulls the phase onto the attacks."""
+    hop = 64
+    oenv = librosa.onset.onset_strength(y=y, sr=SR, hop_length=hop, n_fft=512)
+    ft = np.arange(len(oenv)) * hop / SR
+    grid = phase + period * np.arange(int((dur - phase) / period) + 1)
+    shifts = np.arange(-span, span + 1e-9, 0.001)
+    score = [float(np.interp(grid + d, ft, oenv).sum()) for d in shifts]
+    return phase + float(shifts[int(np.argmax(score))])
 
 
 def load_sections(path: Path) -> list[dict]:
@@ -140,7 +154,7 @@ def main() -> int:
            "tool": f"librosa {librosa.__version__} beat_track"}
     if a.constant:
         period, phase, resid, dropped = fit_constant(det, np)
-        phase = phase % period
+        phase = refine_phase(y, period, phase % period, dur, np, librosa) % period
         beats = phase + period * np.arange(int((dur - phase) / period) + 1)
         out.update(bpm=round(60 / period, 4), period=round(period, 6), phase=round(phase, 4),
                    residual_ms=round(resid, 2), outliers_dropped=dropped)

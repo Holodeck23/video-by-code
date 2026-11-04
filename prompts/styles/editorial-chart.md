@@ -74,6 +74,8 @@ A drawing head rides the clip edge: 6px claret disc interpolated between the two
 - Signal flows: dashed claret line 5px, `setLineDash([15, 12])`, `lineDashOffset = t * 75`; or 24px squares alternating claret and grey travelling a curve at 0.9 cycles per second, six at a time.
 - Step strips: Libre Baskerville 700 51px; the active step is claret with a 5px underline of its own width, others ink at 35% alpha, joined by muted arrows.
 - Second chart type: a line over a lower baseline with 5 gridlines; value labels hang in the left margin, right-aligned, centred on their gridline, so the first point never runs through a label. 120 samples, wash 0.18 to 0.03, line 7.5px claret, head disc 10px. Add a `sin(u * 40) * 1.2 * (1 - u)` wiggle so early points look noisy and late points settle.
+- Node diagram in the same hairline voice: nodes are 15px discs filled with the ground colour and ringed 3px in ink (claret when active); edges are straight lines whose width is `2 + 3.6 * |weight|` and alpha `0.5 + 0.7 * |weight|`, claret for positive weights and #857D75 for negative, so even near-zero edges stay visible at video size. Put the diagram inside a plain ink box with a small-caps title at its top-left.
+- Pictograms: monoline icons, 2.4px ink or claret stroke, round joins, with tiny solid eyes or dots as the only fills; never shaded, never coloured beyond the two inks.
 - Wrong: a claret X of two 7px strokes, then a ring; right: a green three-point tick, 9px.
 
 ## Motion
@@ -131,7 +133,7 @@ Quiet newsroom: felt pen, page-glide, small key taps.
 2. Headline in Libre Baskerville 700 72px at y=186; dek 33px muted at y=234; "Annual, years. Figures are illustrative" Inter 24px at y=272.
 3. Forecast band over the last year, "Forecast" italic. Grid at 0/100/200/300/400 with the 2px ink baseline; x labels every second year.
 4. Four grey series, direct-labelled to the right with nudging; each with seeded quarterly noise.
-5. The hero in claret: wash, 5px line, dashed projection; end marker with value label "Name" and "$405bn" in Inter 800 36px.
+5. The hero in claret: wash, 5px line, dashed projection; end marker with a value label (series name, then the figure and unit) in Inter 800 36px.
 6. Two Caveat 54px notes with leaders, one ringed point, one muted note.
 7. Footer hairline at y=972, source in small caps at 28px, credit right-aligned.
 8. Push at scale 1.012, `H.grain` at 0.025. Check: gridlines must be barely there, the claret must be the first thing the eye lands on.

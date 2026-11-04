@@ -23,7 +23,7 @@ The viewer believes they are looking into a shadow-box built from stiff cardstoc
 | Support (teal) | #58b0a6 | secondary letters, bars, small labels; deep teal #2f7f86 for panels |
 | Alarm / wrong | #d9473b | crosses, error arrows; use rarely |
 | Right / result | #5fae6a | check marks |
-| Far ridge / mid ridge | #4c5590 / #3d5f7a | cooler and lighter the further back |
+| Far / mid silhouette | #4c5590 / #3d5f7a | cooler and lighter the further back |
 | Ground sheet / snips / front strip | #2f6b66 / #285f5a / #163a3a | nearer is darker |
 | Shadow ink | rgb(14,10,30) | never pure black |
 
@@ -32,8 +32,8 @@ Keep the backboard dark and the pieces saturated so every sheet reads against it
 ## Ground and surface
 1. Backboard: a flat `#2b2d5a` sheet the size of the frame, with the fibre texture and no edge rim and no shadow (depth 0). Optional confetti punched into it: 60 five-point stars, radius 4.5-10px, `#f6e7bf`, upper 60% of the frame, depth 0.25 (cached).
 2. Fibre tile, built once with `H.offscreen('fibre', 768, 768, fn)`: (a) a 96x96 low-res mottle from `H.noise(77).fbm2(i*5/96, j*5/96, 3)`, made seamless by blending four wrapped samples weighted by distance to the tile edges; white where the value is positive, black where negative, alpha `min(1, |v|*0.47)`, stretched to full size; (b) speckle: on half the pixels a white or black fleck at alpha `|r-0.5|*0.24`; (c) about 2500 curved fibres, 6-33px long, bend +-7px, width 0.6-1.6px, 55% white at alpha 0.08-0.22 and 45% black at alpha 0.05-0.14, each drawn at the 9 wrapped offsets so the tile repeats cleanly.
-3. Layer stack, back to front, each a wide sheet cached once and drawn at its own parallax factor: far ridge 0.3 (depth 1.0), mid ridge 0.6 (depth 1.15, with small cut trees glued on), working ground 1.0 (depth 1.3), a dark foreground strip 1.25 (depth 1.6, over everything but under the finishing).
-4. The world is longer than the screen: 2-4 screens (1920px each). Story pieces live in world space; the ridge layers and strips move with `cam * factor`.
+3. Layer stack, back to front, each a wide sheet cached once and drawn at its own parallax factor: far silhouette 0.3 (depth 1.0), mid silhouette 0.6 (depth 1.15, with small cut shapes glued on that suit the topic), working ground 1.0 (depth 1.3), a dark foreground strip 1.25 (depth 1.6, over everything but under the finishing). The silhouettes are any scissor-cut horizon: hills, a skyline, waves.
+4. The world is longer than the screen: 2-4 screens (1920px each). Story pieces live in world space; the silhouette layers and strips move with `cam * factor`.
 5. Cached: fibre tile, every sprite, every layer. Per frame: placement, drop-ins, arrows being drawn, counters, light, grain.
 
 ## Mark-making
@@ -44,7 +44,7 @@ Keep the backboard dark and the pieces saturated so every sheet reads against it
 
 **Drop shadow** (when drawing a sheet at height `d`): two passes. Soft: `shadowColor rgba(14,10,30,0.5)`, blur `9 + 10.5d`, offset `(2.25 + 3.6d, 3 + 5.4d)`. Then a contact pass of the same image: `rgba(10,6,20,0.38)`, blur 3.75, offset (1.2, 2.1). Heights: backboard 0, tiny pieces 0.2-0.4, tags and letters 0.6-0.8, main subjects 1-1.4, near layers 1.3-1.6. While a piece is in the air, add `lift * 3` to `d` so its shadow separates.
 
-**Scissor-cut outlines.** Never a clean vector curve. Circles and blobs: 22px segments (at least 18 vertices), start angle random, each vertex angle +-0.2 of a step, radius `+ r.gauss()*0.9`, so the shape is faceted and slightly lumpy. Straight edges: split every run into about 33px pieces and nudge the interior vertices by `r.gauss()*1` px. Ridges: x steps of 18-45px following a sine sum, vertex jitter 0.9px.
+**Scissor-cut outlines.** Never a clean vector curve. Circles and blobs: 22px segments (at least 18 vertices), start angle random, each vertex angle +-0.2 of a step, radius `+ r.gauss()*0.9`, so the shape is faceted and slightly lumpy. Straight edges: split every run into about 33px pieces and nudge the interior vertices by `r.gauss()*1` px. Silhouette edges: x steps of 18-45px following a sine sum, vertex jitter 0.9px.
 
 **Compound sprites.** Build anything with parts as 3-6 stacked sheets, each with its own seed and its own depth (base 0, details 0.3-0.55, small features 0.12-0.25), flattened into one cached sprite. Never one flat shape with a drawn highlight.
 
@@ -67,7 +67,7 @@ Keep the backboard dark and the pieces saturated so every sheet reads against it
 ## Motion
 - Drop-in is the atomic move: `u = H.prog(t, st, st+du)` with `du` 0.3-0.45s, position `dy = -(1-H.ease.outBack(u)) * dist` (dist 60-135px), scale `1 + (1-H.ease.outQuad(u))*0.08`, extra shadow lift, alpha `min(1, u*4)`. It lands at `u` of about 0.37, where the overshoot first touches rest.
 - Camera: one long diorama. Pans take 0.6-1.0s with `H.ease.inOutCubic` and move the layers at 0.3 / 0.6 / 1 / 1.25 times the pan. After the set is built, a slow push to 1.035 over 2.8s around (0.52W, 0.5H).
-- Alive between beats: hanging pieces sway `sin(t*1.7)*0.03` rad; riders on a belt bob `sin(t*9+phase)*3`px and tilt `sin(t*5+phase)*0.03`; a piece that receives something swells by `0.05 * exp(-((t - tHit)*9)^2)`; dial hands jitter `sin(t*40)*0.08` rad while turning.
+- Alive between beats: hanging pieces sway `sin(t*1.7)*0.03` rad; a piece in transit bobs `sin(t*9+phase)*3`px and tilts `sin(t*5+phase)*0.03`; a piece that receives something swells by `0.05 * exp(-((t - tHit)*9)^2)`; a pivoting pointer jitters `sin(t*40)*0.08` rad while it turns.
 - Stagger items 0.05-0.3s apart; nothing arrives with its neighbour.
 
 ## Scene changes
@@ -94,7 +94,7 @@ Define a card tap `tap(t, g, pan, f)`: a snap, `k.noise(t, {gain: 0.26*g, pan, f
 
 ## Signature moves
 - Letters drop one at a time onto the backboard, each with its own tap and lifted shadow.
-- The camera pans station to station while ridge layers slide at different speeds like a pop-up book.
+- The camera pans station to station while the silhouette layers slide at different speeds like a pop-up book.
 - Counters swap cut-out digit tiles, each slightly tilted.
 - Arrows grow as paper strips and finish with a solid wide head.
 - A flipped card: scale x by `|cos(pi*u)|` and swap the face at the midpoint.
@@ -112,7 +112,7 @@ Define a card tap `tap(t, g, pan, f)`: a snap, `k.noise(t, {gain: 0.26*g, pan, f
 | Everything appears at once | stagger 0.05-0.3s and land with a tap |
 
 ## Hero frame recipe
-1. Cached backboard `#2b2d5a`, 60 stars, then far ridge (y about 510), mid ridge with trees (y about 680), torn ground (y about 840), foreground strip (y about 990), each with its depth shadow.
+1. Cached backboard `#2b2d5a`, 60 stars, then far silhouette (y about 510), mid silhouette with a few glued shapes (y about 680), torn ground (y about 840), foreground strip (y about 990), each with its depth shadow.
 2. A two-line headline, 138px and 192px, centred near y 375 and 600, letters alternating coral, saffron, teal on cream backings, tilted +-0.06 rad, depth 0.8.
 3. One main subject in the centre made of 4-5 stacked sheets, depth 1-1.4, with a small teal tag (45px) tilted -0.08 rad beside it.
 4. One saffron arrow with a solid head curving from the subject to a second piece, grown to `p = 1`.

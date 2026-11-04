@@ -33,8 +33,8 @@ Light adds, it never covers (`'lighter'`). One colour per meaning, held for the 
 Bake one wide plate, 3x the frame width (5760x1080), with `H.offscreen('night', 5760, 1080, fn)`, and slide it at 0.6x the camera's travel when the camera swings (parallax).
 1. Horizon at y = 840. Sky: linear gradient #02030a (0), #060a1c (0.6), #151a2e (1.0) down to the horizon.
 2. 1500 stars from `H.rng(3131)`. Magnitude `m = r()^5`; radius 0.9 + 2*m px; alpha `0.25 + 0.75*m`, scaled by `1 - 0.8*smoothstep(horizon-240, horizon, y)` so stars die near the glow. Colours picked from white, (200,215,255), (255,230,200).
-3. Land: fill #04050a below a wobbly ridge: `y = 840 - 21 - 24*sin(x*0.0027 + 1.2) - max(0, fbm2(x*0.02, 2.2, 3)) * 69 - max(0, n2(x*0.053, 5)) * 15`, sampled every 4px. Draw 7000 tiny grass blades (3-12px, rgba(30,36,48,0.2-0.6)) below the ridge, denser toward the bottom.
-4. Horizon bokeh: 26 flat discs (radius 12-36px) at y 825-870, additive, colours picked from #ffaa5a, #ffc878 and #aad2ff. Each is a radial gradient with a brighter rim: alpha 0.16 at the centre, 0.28 at 85% of the radius, 0 at the edge.
+3. Land: fill #04050a below a wobbly ridge: `y = 840 - 21 - 24*sin(x*0.0027 + 1.2) - max(0, fbm2(x*0.02, 2.2, 3)) * 69 - max(0, n2(x*0.053, 5)) * 15`, sampled every 4px. Draw 7000 tiny grass blades (5-12px, leaning +-4px, rgba(30,36,48,0.2-0.6)) below the ridge, denser toward the bottom.
+4. Horizon bokeh: 26 flat discs (radius 12-36px) at y 780-825, just above the ridge, additive, colours picked from #ffaa5a, #ffc878 and #aad2ff. Each is a radial gradient with a brighter rim: alpha 0.16 at the centre, 0.28 at 85% of the radius, 0 at the edge.
 5. Optional figure of the painter, off to one side, baked once (see Finishing).
 Per frame: the light layers, ground spill, smear, noise. The plate is static.
 
@@ -65,7 +65,7 @@ Widths at 1920: network links 3.9px, nodes 6px, arrows 6px, orbs 10px, rings 7.5
 ## Diagrams: arrows, labels, charts
 - Arrow: a shaft pen with an amber-to-white gradient, then a head of two separate strokes of 36px at +-2.5 rad from the direction of travel.
 - Label: written in Caveat beside the thing, 30px clear, after the thing is done. A tag is nothing more than a word.
-- Network: layers of ring nodes (cyan, violet, amber by layer) joined by gap-mode links, each link fading in over 0.5 s with its start staggered 0.03 s per link.
+- Network: layers of ring nodes (cyan, violet, amber by layer; 3, 4 and 2 nodes) joined by gap-mode links, every node of a layer to every node of the next. Layers sit 225px apart, nodes 138px apart vertically, ring radius 27px, each link starting and ending 36px short of the node centres. Links draw on in 0.5 s, starts staggered 0.03 s per link; the nodes' rings follow, 0.05 s apart.
 - Chart: two white axes (5px), a rainbow bundle of seven strands for the curve (each offset 4.5px, hue 180 + 25k to 300 + 15k, lightness 0.6, 3px), drawn by the tube in 1.2 s.
 - Emphasis: a pink-to-amber elliptical ring around the key number plus a spark burst of 24 rays (radius 270 growing 60px, length 45-99px, amber to white, 3.75px), visible for 0.45 s.
 - Wrong: two hard red slashes of 10px across the thing, 0.1 s each, then a ring and a word. Right: a green tick of three points (10px).
@@ -82,7 +82,7 @@ A whip-pan swings the camera 840px in 0.45 s (`smoothstep`). At the midpoint, cl
 ## Finishing passes (run every frame, same strength)
 1. Glow blooms from the colour layer, blurred at low resolution and added: 51px blur at alpha 0.5, 13px blur at 0.8, then the sharp colour and core layers, then a 4.5px blur of the core at 0.6.
 2. Ground spill: draw the blurred glow flipped about the horizon, squashed to 35% height, at quarter size, masked by a cached patchy mask `(1 - y/h)^1.25 * clamp(0.6 + 0.75*fbm2(x*0.03, y*0.2, 3), 0, 1)`. The light pools on wet grass.
-3. Painter's ghost (optional): silhouette drawn twice (60% and a copy shifted -12px at 25%), blurred 2-3px, then multiply at 45%, an additive dim body tint (rgb(150,110,120) to rgb(30,30,60)) at 32%, and a rim of colour on the edge facing the trails (silhouette minus its own copy shifted 9px, gradient rgb(255,200,170), rgb(150,120,255), rgb(70,160,220)) at 50%.
+3. Painter's ghost (optional): a standing figure about 450px tall (head ellipse 28x36px, shoulders and a torso 100px wide, two legs and a raised arm as 33px and 22px round strokes) in the lower right of the scene, fading up over 1.7 s, drawn twice (60% and a copy shifted -12px at 25%), blurred 2-3px, then multiply at 45%, an additive dim body tint (rgb(150,110,120) to rgb(30,30,60)) at 32%, and a rim of colour on the edge facing the trails (silhouette minus its own copy shifted 9px, gradient rgb(255,200,170), rgb(150,120,255), rgb(70,160,220)) at 50%.
 4. `H.vignette(ctx, {strength: 0.55, color: '#000004'})`.
 5. Sensor noise: per pixel from `H.rng(frameSeed)`, amplitude `(1 - luma)*9 + 2`, with extra independent noise on red and blue so shadows speckle with colour. Cheap fallback: `H.grain(ctx, t, {strength: 0.05, cell: 2, fps: 30, mono: false})`.
 
@@ -120,7 +120,7 @@ Shutter and wand are the voice. A wand gesture is `k.noise(t, {color: 'pink', fi
 1. Cached night plate: sky gradient, 1500 stars, ridge, grass, 26 bokeh discs.
 2. A two-line headline in Caveat 144px and 225px, cyan then pink, written fully (prog 1) with the three-pass colour layer and the eroded core.
 3. One main subject: a 3-layer network (3, 4, 2 nodes), spiral rings at 6px and gap-mode links at 3.9px, in cyan, violet and amber.
-4. A twisting ribbon (4 twists, 170px, hue 175 to 325) swept round the whole thing at 0.65 gain.
+4. A twisting ribbon (3.4 twists, 150px cross-section, hue 175 to 325) swept round the whole thing at 0.65 gain.
 5. A short amber arrow (shaft plus two head strokes) to a label in #ebf0ff at 81px.
 6. Blooms, ground spill, ghost at 0.6, vignette 0.55, sensor noise.
 7. Compare against a real long exposure: cores nearly white, colour only at the fringe, the bottom fifth of the frame faintly lit with the same hues.

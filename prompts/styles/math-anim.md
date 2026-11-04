@@ -15,7 +15,7 @@ The viewer believes they are watching a mathematician's program construct an ide
 | Role | Hex | Notes |
 |---|---|---|
 | Ground | #000000 | pure black, refilled every frame, nothing behind it |
-| Primary ink | #ffffff | axes, equations, neuron outlines, tick numbers |
+| Primary ink | #ffffff | axes, equations, node outlines, tick numbers |
 | Secondary ink | #bbbbbb | captions, subtitles, de-emphasised words |
 | Muted ink | #888888 | loop-back arrows, idle stages |
 | Structure blue | #58c4dd | the main curve, "the model", positive weights |
@@ -34,13 +34,13 @@ There is no surface. Each frame starts with `fillRect` in #000 over the whole ca
 ## Mark-making
 All lines are `lineCap = 'round'`, `lineJoin = 'round'`, no blur, no shadow, no alpha-stacking tricks. Draw-on is a helper of your own, `part(pts, a, b)`: it computes cumulative length with `H.pathLength`, then strokes only the slice from fraction `a` to `b` (`H.partial` for a leading slice). Every reveal is a slice whose end runs 0 to 1 on the sigmoid ease (see Motion).
 
-- **Axes:** two arrows from the origin, 4px white, tip 27px long. The shaft draws first, ticks follow in order: each tick is 20px long (10 either side), 3px wide, grows from 0 to full length over 0.25 of the axis time, staggered across the first 80% of it. Numbers beside the ticks fade in after, drifting 15px into place.
+- **Axes:** two arrows from the origin, 4px white, tip 21px long. The shaft draws first, ticks follow in order: each tick is 20px long (10 either side), 3px wide, grows from 0 to full length over 0.25 of the axis time, staggered across the first 80% of it. Numbers beside the ticks fade in after, drifting 15px into place.
 - **Curve:** a polyline of 160 samples, 6px #58c4dd, drawn on as a slice. A second curve (the thing that improves) is 6px #83c167.
 - **Moving dot:** radius 15px, #ffff00, grows from 0 on its own `smooth` ease. Under it a dashed drop line to the axis (14px dash, 12px gap, 3px wide, white at 70%). A tangent line through it: 5px green, grows from the centre to 225px each side.
 - **Ghost dot:** where the dot was. Fill #000 at 20%, then gold at 22%, then a 3px gold ring at full alpha. Linked to the next position by a curved arrow: quadratic arc bending 30% of its length, 4.5px gold, tip 22px.
-- **Surrounding rectangle:** a stroke around the key term, padding 12px sides, 75px above, 36px below the baseline. It is drawn as a slice of the path starting top-right, going left, down, right, back up. 4.5px yellow.
+- **Surrounding rectangle:** a stroke around the key term, padding 21px at the sides, 75px above, 36px below the baseline. It is drawn as a slice of the path starting top-right, going left, down, right, back up. 4.5px yellow.
 - **Brace:** a filled tapered brace opening upward under a group, 24px deep, grows outward from its centre; white.
-- **Network:** nodes are 30px-radius circles with a 3.3px white outline; the fill alpha is the activation (0 to 1). Edges are straight lines whose colour is the sign (#58c4dd positive, #fc6255 negative), width `1 + 5.4*|w|` px, alpha `0.25 + 0.75*|w|`. Edges stagger on by layer plus a seeded offset from `H.rng`.
+- **Node-link diagram:** nodes are 30px-radius circles with a 3.3px white outline; the fill alpha is the activation (0 to 1). Edges are straight lines whose colour is the sign (#58c4dd positive, #fc6255 negative), width `1 + 5.4*|w|` px, alpha `0.25 + 0.75*|w|`. Edges stagger on by layer plus a seeded offset from `H.rng`.
 - **Flash:** a bright 25 to 40% slice of a path travelling along it (slice from `b-w` to `b`, `b` running 0 to 1+w), 4.5-9px yellow. It shows data or error moving, and is the style's only "glow".
 - **Wrong mark:** two 7.5px red strokes forming a cross, 22px arms; right mark is a 7.5px green three-point check.
 
@@ -48,7 +48,7 @@ All lines are `lineCap = 'round'`, `lineJoin = 'round'`, no blur, no shadow, no 
 - Font: STIX Two Text. Maths: variables are *italic* 400, words and digits upright 400. Subscripts are 0.62 size, dropped 0.22 em; operators have a thin space either side.
 - Sizes at 1920x1080: title and header 66-78px (never smaller), equations 78px, story labels 54px (never below 42px), tick numbers 40px, key number 204px at weight 600 shrinking to 156px once landed, counter 105px.
 - Written-on (the "write"): split text into glyphs and give each a sub-animation. Stroke-trace its outline using `setLineDash([d*L, L*30])` (line width `0.028*size`) for the first half, then cross-fade to the solid fill for the second half. Glyphs start staggered with lag ratio `min(4/n, 0.2)` of the whole duration, so long equations are fast and short words are slow. Typical: a title 1.0 s, a 14-glyph equation 1.1 s.
-- Transform (matching): glyphs that share a key (same character role) fly to their new place, resizing and recolouring on one ease; unmatched glyphs fade out while shrinking toward the group and new ones fade in from the same offset. Use it to turn a question into a header, "dog?" into "cat", loss into accuracy.
+- Transform (matching): glyphs that share a key (same character role) fly to their new place, resizing and recolouring on one ease; unmatched glyphs fade out while shrinking toward the group and new ones fade in from the same offset. Use it to turn a question into a header, a guess word with a "?" into the answer word, one axis label into the next.
 - Numbers: a counter is a plain re-rendered integer with commas; ease the progress with `u^2.4` for large counts so it accelerates, and `smooth` for percentages. Never animate digits with blur or roll. Landing: the number is highlighted with the indicate pulse (below).
 
 ## Diagrams: arrows, labels, charts
@@ -57,7 +57,7 @@ All lines are `lineCap = 'round'`, `lineJoin = 'round'`, no blur, no shadow, no 
 - Labels sit 15-20px from the thing in the same colour as the thing, written on after it is drawn. Equations are the labels: put the variable next to the object it names, and colour-match the two.
 - Indicate: a term scales to 120% about its centre and mixes toward #ffff00 and back (a there-and-back sigmoid, 0.45 s). Pair it with the surrounding rectangle.
 - Chart: axes then ticks then numbers then curve. Relabel axes by transforming the old words into the new ones while tick numbers cross-fade with a 20px vertical slide. A target level is a dashed 50% green line from the axis to the curve tip.
-- Pixel images: a grid of grey squares (cell 15px, grey scale as alpha on white, 16% white grid lines, 3px white frame) that fly into input nodes as 7px squares, staggered along the image.
+- Sampled grid: a square grid of cells (cell 15px, grey level as alpha on white, 16% white grid lines, 3px white frame) whose cells shrink to 7px squares and fly into the nodes they feed, staggered in reading order, fading out on arrival.
 
 ## Motion
 - The ease: `smooth(x) = (sig(10*(x-0.5)) - sig(-5)) / (1 - 2*sig(-5))` with `sig(v) = 1/(1+e^-v)`, clamped. Every move, draw-on, fade and camera uses it; nothing is linear and nothing bounces. Use `H.clamp` and `H.prog` to feed it a 0..1 beat.
@@ -113,4 +113,4 @@ Gentle, warm and sparse, like a quiet score under a lecture; nothing percussive.
 3. A 6px #58c4dd curve through 160 samples; a 15px yellow dot on it, a dashed drop line to the axis, a 5px green tangent through the dot.
 4. Two gold ghost dots earlier on the curve with 4.5px curved arrows linking them to the dot.
 5. On the right, an equation at 78px centred near (1478, 480): the term to look at in yellow, boxed by a 4.5px yellow rectangle, with a white brace and a 54px word beneath.
-6. Below it, a blue label "L(w) = 0.61" at 69px. Nothing else; no grain, no vignette. Compare at 400% zoom: every edge is crisp.
+6. Below it, a blue readout "f(x) = 0.61" at 69px, the number in white. Nothing else; no grain, no vignette. Compare at 400% zoom: every edge is crisp.

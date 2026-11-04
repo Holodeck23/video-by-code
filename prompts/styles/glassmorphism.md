@@ -58,6 +58,8 @@ Glass over glass: after the cards are drawn, make a new blur (27px) of the compo
 
 **Components inside cards.** Tiles: radius 27px, white 10% fill, 1.5px border white 20%. Progress bar: 9px track at white 12%, fill with the accent gradient, width scaled `u^1.6`. Message bubbles: sent = accent gradient with a pink shadow (rgba(255,60,200,0.35), blur 30, offsetY 9), square tail corner (radii 27, 27, 6, 27); received = white 12% with 1.5px border at 22%; each pops with `H.ease.outBack` scaled from its tail corner over 0.4 s. Typing dots: three 5px discs, alpha `0.35 + 0.65 * max(0, sin(9t - 0.9i))`. Input: a pill at rgba(10,6,40,0.22) with a caret blinking at `sin(6t) > 0`.
 
+**Live feed grid.** Inside a card, a clipped rounded rectangle (radius 24) holds 4-column tiles (201x174, pitch 219 across and 192 down). Scroll the whole grid upward at 90px/s from the moment the card lands, wrapping by the row pitch and advancing the item index each wrap so it never repeats visibly. Each tile eases in over 0.3 s, staggered 0.05 s by index. A progress bar above it fills at `u^1.6` while a count beside it climbs.
+
 **Verdict badge:** 26px disc (green or red) with 27px glow, white 5px glyph (tick or cross), pops with `outBack` over 0.3 s.
 
 ## Type and numbers
@@ -72,6 +74,7 @@ Glass over glass: after the cards are drawn, make a new blur (27px) of the compo
 - Arrows are glow connectors only: a gradient line with a lit head and travelling dots. Labels ride the line's midpoint as pills.
 - Sequence steps are numbered pills ("1  Name", "2  Name") with distinct fills: white 22% for neutral, accent gradient for the main path, warm gradient for the error path.
 - Line chart on a glass card: gridlines white 12% 1.5px, area gradient mint 35% to 0, line mint 4.5px with 18px glow, white node discs 6px, a head disc 10px with glow; a ring expands from the final point (radius 15 + 60u, alpha `1-u`) when the value lands.
+- Network card: three columns of 3-4 nodes, 130px apart across. Edges are straight lines from every node to the next column, colour mixed (`H.mixRGB`) between #7ad7ff and #ff4fc1 by weight `w`, alpha `0.25 + 0.65w`, width `1.2 + 4.8w`; during an error pass mix the same edges toward #ff5a5a, then relax as the weights re-balance. Nodes are 20px discs with a radial gradient (white highlight offset -6, -8; mid #ff78dc, shifting to #ffe68c while a signal pulse passes; rim #7a2bff) and a #ff4fc1 glow of `18 + 21 * pulse`. A pulse crosses the columns as `max(0, sin(6t - 1.4 * column))`, only while data is flowing.
 - Ring chart: 9px track at white 15%, arc gradient #4dffa6 to #00d1ff, round caps, sweep with `inOutQuad` over 0.9 s. Sparkline: 13 points, seeded by `H.rng(4)`, a small `sin(0.8i + t)` breathing so it feels live.
 - Wrong: card shakes `sin(80t) * 9` px for 0.4 s, red ring with 30px glow pulsing at `0.55 + 0.45 * sin(10t)`, red badge. Right: green bubble and badge.
 
