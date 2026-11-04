@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>From time to film</title>
+<style>html,body{margin:0;background:#111b25}canvas{display:block}</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script src="../lib/harness.js"></script><script src="../lib/sound.js"></script>
+<script>
+// Five authored 7.2-second scenes. Audio fixture and captions use these same boundaries.
+// No web fonts or external assets. Same environment + same t => same canvas pixels.
+const ctx = document.getElementById('c').getContext('2d');
+window.DURATION = 36; window.FPS = 30;
+const C = {paper:'#f2eee4',ink:'#172733',mute:'#5d6d73',blue:'#185dcc',red:'#b23425',green:'#187659'};
+const TITLES = ['A frame is a moment.', 'One timeline. Two outputs.', 'Motion explains the idea.', 'Test the exported film.', 'Deliver the whole system.'];
+const CAPTIONS = [
+  ['A video is a sequence of drawings.', 'Each frame asks what the scene looks like now.'],
+  ['Keep picture, sound, and captions on one timeline.', 'Changing the timing should change them together.'],
+  ['Reveal cause before effect.', 'Move the object that matters, then hold the result long enough to read.'],
+  ['Check the finished file for missing frames,', 'clipped labels, wrong colours, and sound that drifts.'],
+  ['Save the source, timing, media, and checks.', 'A team can reproduce the film and improve the next one.']
+];
+const P=H.prog, E=H.ease;
+function text(s,x,y,px=48,color=C.ink,align='left',weight=700){ctx.font=`${weight} ${px}px Arial,sans-serif`;ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline='alphabetic';ctx.fillText(s,x,y);}
+function box(x,y,w,h,color=C.paper,r=20){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function line(x1,y1,x2,y2,color=C.ink,width=5){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+function arrow(x1,y1,x2,y2,u,color=C.blue){if(u<=0)return;const x=H.lerp(x1,x2,u),y=H.lerp(y1,y2,u);line(x1,y1,x,y,color,8);if(u>.98){const a=Math.atan2(y2-y1,x2-x1);for(const s of [-1,1])line(x,y,x-26*Math.cos(a+s*.55),y-26*Math.sin(a+s*.55),color,8);}}
+function frame(x,y,w,h,at,accent=C.blue){box(x+10,y+12,w,h,'#d4d9d8');box(x,y,w,h,'#ffffff');const r=h*.27,cx=x+w/2,cy=y+h*.46;ctx.strokeStyle=accent;ctx.lineWidth=7;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();const a=at/6*Math.PI*2-Math.PI/2;line(cx,cy,cx+Math.cos(a)*r*.8,cy+Math.sin(a)*r*.8,accent,7);text(`t = ${at.toFixed(2)} s`,cx,y+h-28,32,C.mute,'center',400);}
+function first(u,t){
+ frame(1130,345,510,360,t);const a=E.outCubic(P(u,.7,2.4));arrow(655,520,1050,520,a);
+ text('draw(t)',425,470,88,C.blue,'center');text('absolute time',425,550,36,C.mute,'center',400);
+ const n=Math.floor(t*30);text(String(n).padStart(4,'0'),1385,820,88,C.ink,'center');text('FRAME INDEX  /  30 FPS',1385,875,28,C.mute,'center',400);
+}
+function timeline(u){
+ const labels=['PICTURE','SOUND','CAPTIONS'];const cols=[C.blue,C.green,C.red];
+ for(let j=0;j<3;j++){const y=380+j*150;text(labels[j],180,y+43,32,C.mute);line(470,y+25,1710,y+25,'#cad2d2',3);
+  for(let k=0;k<5;k++){const a=E.outCubic(P(u,.5+k*.18+j*.12,1.1+k*.18+j*.12));box(490+k*240,y-10,208*a,70,cols[j],9);}
+ }
+ const x=490+1190*P(u,.6,6.8);line(x,325,x,800,C.ink,4);box(x-58,290,116,42,C.ink,5);text('ONE CLOCK',x,319,18,'#fff','center');
+}
+function cause(u){
+ const push=E.inOutCubic(P(u,1.2,3.0));frame(200+push*450,365,300,240,3.6);
+ arrow(980,485,1200,485,P(u,2.3,3.1));
+ const a=E.outCubic(P(u,3,3.6));ctx.globalAlpha=a;box(1270,365,380,240,C.green);text('RESULT',1460,475,60,'#fff','center');text('holds to be read',1460,545,30,'#fff','center',400);ctx.globalAlpha=1;
+ text('CAUSE',350,755,42,C.blue,'center');text('EFFECT',1460,755,42,C.green,'center');
+ text('move → explain → hold',960,875,46,C.mute,'center',400);
+}
+function tests(u){
+ const names=['FRAME COUNT','COLOUR TAGS','AUDIO SYNC','LABEL BOUNDS'];
+ for(let i=0;i<4;i++){const y=350+i*128,ok=u>1.1+i*.85;box(230,y,1460,98,'#fff',12);text(names[i],280,y+64,36,C.ink);box(1370,y+20,270,58,ok?C.green:'#e2e6e4',8);text(ok?'CHECKED':'WAIT',1505,y+60,30,ok?'#fff':C.mute,'center');}
+}
+function delivery(u){
+ const names=['SOURCE','TIMING','MEDIA','CHECKS'];
+ names.forEach((s,i)=>{const k=E.outCubic(P(u,.45+i*.3,1.05+i*.3)),x=210+i*395;ctx.save();ctx.translate(x,390+60*(1-k));ctx.globalAlpha=k;box(0,0,315,260,i===3?C.green:'#fff');text(String(i+1).padStart(2,'0'),32,76,54,i===3?'#fff':C.blue);text(s,32,205,32,i===3?'#fff':C.ink);ctx.restore();});
+ text('REPRODUCIBLE BY THE NEXT TEAM',960,830,45,C.ink,'center');
+}
+window.__renderFrame=(t)=>{
+ ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+ const i=Math.min(4,Math.max(0,Math.floor(t/7.2))),u=t-i*7.2;
+ box(0,0,1920,1080,C.paper,0);text('VIDEO / BY CODE',130,95,28,C.mute);text(`${String(i+1).padStart(2,'0')} / 05`,1790,95,28,C.mute,'right');
+ text(TITLES[i],130,235,88,C.ink);line(130,280,1790,280,'#ccd2cf',2);
+ [first,timeline,cause,tests,delivery][i](u,t);
+ box(0,948,1920,132,C.ink,0);text(CAPTIONS[i][0],960,995,38,'#fff','center',400);text(CAPTIONS[i][1],960,1046,38,'#fff','center',400);
+ box(0,940,1920*H.clamp(t/36,0,1),8,C.blue,0);
+};
+window.__ready=document.fonts.ready;
+window.scoreSound=k=>{for(let i=0;i<5;i++)k.play('tock',i*7.2+.35,{gain:.12});};
+</script><script src="../lib/player.js"></script></body></html>

@@ -15,7 +15,7 @@ export function parseArgs(argv) {
       const [name, inline] = a.slice(2).split('=', 2);
       if (!VALUE_FLAGS.has(name)) fail(`unknown flag --${name}`);
       const v = inline ?? argv[++i];
-      if (v === undefined) fail(`--${name} needs a value`);
+      if (v === undefined || v === '' || v.startsWith('--')) fail(`--${name} needs a value`);
       opts[name] = v;
     } else if (!opts.page) opts.page = a;
     else fail(`unexpected argument ${a}`);
@@ -39,6 +39,9 @@ export function parseArgs(argv) {
   if (out.sheet !== null && (out.sheet < 1 || out.sheet > 64)) fail('--sheet takes 1..64');
   if (!out.stills && !out.out) fail('missing --out');
   if (out.fps !== undefined && out.fps <= 0) fail('--fps must be > 0');
+  if (out.from < 0 || (out.to !== undefined && out.to <= out.from)) fail('range must satisfy 0 <= from < to');
+  if (out.crf < 0 || out.crf > 51) fail('--crf must be between 0 and 51');
+  if (out.stills && out.sheet !== null) fail('--stills and --sheet are separate modes');
   return out;
 }
 

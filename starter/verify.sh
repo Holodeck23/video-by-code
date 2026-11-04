@@ -7,7 +7,7 @@ f="$1"; want_s="${2:-}"; want_fps="${3:-}"; want_audio="${4:-}"
 fail() { echo "FAIL: $*"; exit 1; }
 
 echo "== streams"; ffprobe -v error -show_entries stream=index,codec_type,codec_name,width,height,r_frame_rate,pix_fmt,nb_frames,duration -of compact=p=0 "$f"
-echo "== full decode (any output below is an error)"; ffmpeg -v error -i "$f" -f null - && echo "decode ok"
+echo "== full decode (any output below is an error)"; ffmpeg -v error -xerror -i "$f" -f null - && echo "decode ok"
 
 echo "== colour tags"
 tags=$(ffprobe -v error -select_streams v:0 -show_entries stream=color_space,color_transfer,color_primaries,color_range -of default=nw=1 "$f")
@@ -19,7 +19,7 @@ grep -qx "color_range=tv" <<<"$tags" || fail "color_range is not tv (limited)"
 
 if [[ -n "$want_s" && -n "$want_fps" ]]; then
   n=$(ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of csv=p=0 "$f")
-  exp=$(python3 -c "print(round($want_s*$want_fps))"); echo "== frames: got $n, expected $exp"
+  exp=$(python3 -c "import math; print(math.floor($want_s*$want_fps+0.5))"); echo "== frames: got $n, expected $exp"
   [[ "$n" == "$exp" ]] || fail "frame count mismatch"
 fi
 

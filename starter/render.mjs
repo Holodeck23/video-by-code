@@ -8,24 +8,35 @@ import { parseArgs } from './lib-render/args.mjs';
 import { openPage, gpuName, grabPng, pageAudioWav } from './lib-render/page.mjs';
 
 const o = parseArgs(process.argv.slice(2));
-const { browser, page, meta } = await openPage(o.page);
-const fps = o.fps ?? meta.fps;
-const from = o.from, to = o.to ?? meta.duration;
-if (!(to > from)) die(`--to (${to}) must be after --from (${from})`);
-console.log(`page ${meta.width}x${meta.height}, ${meta.duration}s; rendering ${from}..${to}s at ${fps} fps`);
-console.log(`GPU: ${await gpuName(page)}`);
-
-const tmp = mkdtempSync(path.join(tmpdir(), 'vbc-render-'));
+let browser, page, meta, fps, from, to, tmp;
+const encoders = new Set();
 let code = 0;
 try {
+  ({ browser, page, meta } = await openPage(o.page));
+  fps = o.fps ?? meta.fps;
+  from = o.from; to = o.to ?? meta.duration;
+  if (!(from >= 0 && to > from && to <= meta.duration)) die(`range must satisfy 0 <= from < to <= DURATION (${meta.duration})`);
+  if (o.stills && o.stills.some(t => t < 0 || t > meta.duration)) die('still timestamps must be within 0..DURATION');
+  if (!o.stills && o.sheet === null && Math.round((to - from) * fps) < 1) die('range rounds to zero frames');
+  console.log(`page ${meta.width}x${meta.height}, ${meta.duration}s; rendering ${from}..${to}s at ${fps} fps`);
+  console.log(`GPU: ${await gpuName(page)}`);
+  tmp = mkdtempSync(path.join(tmpdir(), 'vbc-render-'));
   if (o.stills) await stills();
   else if (o.sheet !== null) code = await sheet();
   else code = await video();
+} catch (error) {
+  console.error(`render: ${error.message}`);
+  code = 1;
 } finally {
-  await browser.close();
-  rmSync(tmp, { recursive: true, force: true });
+  for (const ff of encoders) {
+    ff.stdin.destroy();
+    if (!ff.exited) ff.kill('SIGTERM'); // only this invocation's own child encoder
+    await ff.done;
+  }
+  if (browser) await browser.close();
+  if (tmp) rmSync(tmp, { recursive: true, force: true });
 }
-process.exit(code);
+process.exitCode = code;
 
 // ---------- modes ----------
 
@@ -110,19 +121,27 @@ async function prepareAudio(len) {
 
 function ffmpeg(args) {
   const ff = spawn('ffmpeg', ['-hide_banner', '-loglevel', 'warning', '-y', ...args], { stdio: ['pipe', 'inherit', 'inherit'] });
-  ff.done = new Promise((r) => ff.on('close', (c) => { ff.exited = true; r(c); }));
+  encoders.add(ff);
+  ff.done = new Promise((r) => {
+    ff.on('error', e => { ff.spawnError = e; });
+    ff.on('close', c => { ff.exited = true; r(c ?? 1); });
+  });
   ff.stdin.on('error', () => {}); // ffmpeg exiting early is reported through its exit code
   return ff;
 }
 async function write(ff, buf) {
   if (ff.exited) die(`ffmpeg stopped early (exit ${await ff.done})`);
-  if (!ff.stdin.write(buf)) await Promise.race([new Promise((r) => ff.stdin.once('drain', r)), ff.done]);
+  if (!ff.stdin.write(buf)) {
+    let onDrain;
+    await Promise.race([new Promise(r => { onDrain = r; ff.stdin.once('drain', onDrain); }), ff.done]);
+    ff.stdin.removeListener('drain', onDrain);
+  }
+  if (ff.exited) die(`ffmpeg stopped early${ff.spawnError ? ': ' + ff.spawnError.message : ` (exit ${await ff.done})`}`);
 }
 async function finish(ff) {
   ff.stdin.end();
   return ff.done;
 }
 function die(msg) {
-  console.error(`render: ${msg}`);
-  process.exit(2);
+  throw new Error(msg);
 }

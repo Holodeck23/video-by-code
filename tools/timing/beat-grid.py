@@ -25,7 +25,7 @@ Steps:
      --downbeat-offset N forces the offset; the assertions still run.
 
 --sections accepts embedded-lyrics.py output ({"sections":[{"name","start"}]}), a list of
-{"name","start"} objects, or a list of numbers. --words accepts word-timing.py output.
+{"name","start"} objects, or a list of numbers. --words accepts a JSON object with lines [{start,end,words:[{start,end}]}].
 
 Output: {bpm, period, phase, constant, residual_ms, meter, downbeat_offset, downbeat_rule,
 beats, downbeats, detected_beats, section_check, duration, tempo_spread}.
@@ -103,12 +103,18 @@ def main() -> int:
     ap.add_argument("--constant", action="store_true", help="fit one BPM + phase (machine-made music)")
     ap.add_argument("--meter", type=int, default=4, help="beats per bar (default 4)")
     ap.add_argument("--sections", type=Path, help="section starts to check downbeats against")
-    ap.add_argument("--words", type=Path, help="word-timing.py output: downbeats must follow the previous line")
+    ap.add_argument("--words", type=Path, help="a JSON object with lines [{start,end,words:[{start,end}]}]: downbeats must follow the previous line")
     ap.add_argument("--downbeat-offset", type=int, help="force which beat offset is beat 1")
     ap.add_argument("--tempo-hint", type=float, default=120.0, help="librosa start_bpm (default 120)")
     ap.add_argument("--tolerance", type=float, default=0.12, help="section-to-downbeat tolerance, s (default 0.12)")
     ap.add_argument("--force", action="store_true")
     a = ap.parse_args()
+    if a.meter < 1:
+        raise ToolError('--meter must be positive')
+    if a.downbeat_offset is not None and not 0 <= a.downbeat_offset < a.meter:
+        raise ToolError('--downbeat-offset must be within 0..meter-1')
+    if a.tempo_hint <= 0 or a.tolerance < 0:
+        raise ToolError('--tempo-hint must be positive and --tolerance nonnegative')
     import librosa
     import numpy as np
 
@@ -123,6 +129,8 @@ def main() -> int:
     det = np.asarray(det, float)
     if len(det) < 8:
         raise ToolError(f"only {len(det)} beats detected; is this music with a pulse?")
+    if a.meter > len(det):
+        raise ToolError('--meter is larger than the number of detected beats')
     ibi = np.diff(det)
 
     out = {"file": src.name, "sha256": sha256(src), "duration": round(dur, 4), "meter": a.meter,

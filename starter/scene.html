@@ -8,6 +8,8 @@
 const W = 1920, H = 1080, ctx = document.getElementById('c').getContext('2d');
 
 // Timeline data (in a real project: loaded from data/timeline.json produced by your timing tools).
+window.DURATION = 4;
+window.FPS = 30;
 const BPM = 120, BEAT = 60 / BPM;
 const WORDS = [
   { w: 'every',  s: 0.50, e: 0.90 }, { w: 'frame',  s: 0.90, e: 1.40 },

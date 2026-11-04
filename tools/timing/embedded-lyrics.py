@@ -15,7 +15,7 @@ them apart:
 
 Cue times are what the exporter wrote, not a measurement. They are often late, and cue ends
 often run across an instrumental break. Every cue carries verified=false; use
-word-timing.py to time the words against the audio. Flags raised per cue:
+manual listening or an external aligner to time the words against the audio. Flags raised per cue:
   runaway          longer than 2 x the time the line needs to be sung (max(1.6 s, 0.072 s per
                    character)) and over 3 s: the cue window spans a break. mov_text cues cannot
                    overlap, so a runaway cue usually ends exactly where the next tag or cue starts
@@ -126,7 +126,7 @@ def main() -> int:
     print(f"{len(cues)} line cues, {len(sections)} section tags, {len(flagged)} flagged; wrote {a.out}")
     for c in flagged:
         print(f"  {c['start']:8.2f} {c['text'][:40]!r}: " + "; ".join(c["flags"]))
-    print("Cue times are unverified. Time the words with word-timing.py before they drive the edit.")
+    print("Cue times are unverified. Align and listen-check the words before they drive the edit.")
     return 0
 
 

@@ -43,8 +43,8 @@ IMG = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
 
 
 def probe(path: Path) -> dict:
-    p = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
-                        "stream=width,height,r_frame_rate,pix_fmt,color_space", "-of", "json", str(path)],
+    p = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_frames", "-show_entries",
+                        "stream=width,height,r_frame_rate,pix_fmt,color_space,nb_read_frames", "-of", "json", str(path)],
                        capture_output=True, text=True)
     if p.returncode != 0:
         raise SystemExit(f"ffprobe failed on {path}: {p.stderr.strip()}")
@@ -59,7 +59,10 @@ def source_args(src: Path, rate: str) -> tuple[list[str], dict]:
             raise SystemExit(f"no image frames in {src}")
         ext = sorted(exts)[0]
         first = sorted(x for x in src.iterdir() if x.suffix.lower() == ext)[0]
-        return ["-framerate", rate, "-pattern_type", "glob", "-i", str(src / f"*{ext}")], probe(first)
+        meta = probe(first)
+        meta["nb_read_frames"] = len([x for x in src.iterdir() if x.suffix.lower() == ext])
+        meta["r_frame_rate"] = rate
+        return ["-framerate", rate, "-pattern_type", "glob", "-i", str(src / f"*{ext}")], meta
     if not src.is_file():
         raise SystemExit(f"no such source: {src}")
     return ["-i", str(src)], probe(src)
@@ -78,6 +81,11 @@ def main() -> int:
         return 2
     enc = probe(a.encoded)
     src_in, src = source_args(a.source, enc["r_frame_rate"])
+    expected_frames = int(src.get("nb_read_frames") or 0)
+    encoded_frames = int(enc.get("nb_read_frames") or 0)
+    count_ok = expected_frames > 0 and encoded_frames == expected_frames
+    if not count_ok:
+        print(f"FAIL: source has {expected_frames} frames, encode has {encoded_frames}; comparing common prefix only")
     scale = ""
     if (enc["width"], enc["height"]) != (src["width"], src["height"]):
         scale = f"scale={src['width']}:{src['height']}:flags=bicubic,"
@@ -120,7 +128,7 @@ def main() -> int:
         print(f"{ch:8s} {ssim[ch]:7.4f} {gap:7.4f} {psnr.get(ch, '-'):>8s} {wtxt:>12s}")
     lagging = [r["channel"] for r in rows if r["gap"] > a.max_lag]
     low = [r["channel"] for r in rows if r["ssim"] < a.min_ssim]
-    fail = bool(lagging or low)
+    fail = bool(lagging or low or not count_ok)
     print()
     if lagging:
         print(f"FAIL: channel {', '.join(lagging)} trails the best channel by more than {a.max_lag} SSIM."
@@ -133,10 +141,12 @@ def main() -> int:
         print("Keep a 4:2:0 copy only for platforms that need it, and check it with this tool.")
     elif low:
         print(f"FAIL: channel {', '.join(low)} below {a.min_ssim} SSIM; lower the CRF or raise the bitrate.")
+    elif not count_ok:
+        print("FAIL: frame counts differ; matching the common prefix does not verify the full encode")
     else:
         print(f"PASS: all channels >= {a.min_ssim} and within {a.max_lag} of each other")
     out = a.json or a.encoded.with_name(a.encoded.stem + ".channels.json")
-    out.write_text(json.dumps({"encoded": a.encoded.name, "source": a.source.name, "frames": len(per_frame),
+    out.write_text(json.dumps({"encoded": a.encoded.name, "source": a.source.name, "frames": len(per_frame), "source_frames": expected_frames, "encoded_frames": encoded_frames,
                                "channels": rows, "ssim_all": float(ms.group(7)),
                                "status": "FAIL" if fail else "PASS"}, indent=2))
     print(f"report: {out}")

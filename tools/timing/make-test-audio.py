@@ -18,7 +18,7 @@ Needs ffmpeg and macOS `say` (for the spoken parts). Writes into OUTDIR:
   song.srt, song-lyrics.txt   the same cues as SRT, and the lyric sheet with [section] tags
   script.txt, say.json        a two-paragraph narration script and its pronunciation map
   narration.wav      the script read by `say` (pronunciation map applied)
-  narration-cut.wav  the same with one sentence removed (verify-narration must fail on it)
+  narration-cut.wav  the same with one sentence removed (for an external narration-verification check)
   sfx.wav            three noise whooshes at 2, 6 and 10 s
   answer-key.json    the true bpm, phase, beats, downbeats, silence, sections, line placements
 
@@ -86,6 +86,8 @@ def main() -> int:
     a = ap.parse_args()
     import numpy as np
     need("ffmpeg", "say")
+    if a.bpm <= 0 or a.phase < 0:
+        raise ToolError('--bpm must be positive and --phase nonnegative')
     if a.bars < 20:
         raise ToolError("--bars must be at least 20 (lyrics, ad-lib and outro tag sit in bars 10-19)")
     out = a.outdir

@@ -10,24 +10,42 @@ export async function openPage(file) {
       '--disable-background-timer-throttling', '--disable-renderer-backgrounding',
       '--autoplay-policy=no-user-gesture-required'],
   });
+  try {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  page.on('pageerror', (e) => { console.error('page error:', e.message); process.exit(1); });
+  const errors = [];
+  page.on('pageerror', e => errors.push(e));
+  page.assertHealthy = () => { if (errors.length) throw new Error(`page error: ${errors[0].message}`); };
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.error(`page ${m.type()}: ${m.text()}`); });
   // ?export=1 keeps the preview player (lib/player.js) switched off.
   await page.goto(pathToFileURL(path.resolve(file)).href + '?export=1');
-  await page.evaluate(() => window.__ready);
+  await page.evaluate(async () => {
+    if (!window.__ready || typeof window.__ready.then !== 'function') throw new Error('page must set window.__ready to a Promise');
+    let timer;
+    try {
+      await Promise.race([window.__ready, new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('page readiness timed out after 30 seconds')), 30000);
+      })]);
+    } finally { clearTimeout(timer); }
+  });
+  page.assertHealthy();
   const meta = await page.evaluate(() => {
     const c = document.getElementById('c');
     if (!c) throw new Error('page has no <canvas id="c">');
     if (typeof window.__renderFrame !== 'function') throw new Error('page has no window.__renderFrame(t)');
     return {
       width: c.width, height: c.height,
-      duration: Number(window.DURATION), fps: Number(window.FPS) || 30,
+      duration: Number(window.DURATION), fps: window.FPS === undefined ? 30 : Number(window.FPS),
       hasScore: typeof window.scoreSound === 'function' && !!window.SOUND,
     };
   });
-  if (!(meta.duration > 0)) throw new Error('page must set window.DURATION (seconds)');
+  if (!(Number.isFinite(meta.duration) && meta.duration > 0)) throw new Error('page must set window.DURATION (seconds)');
+  if (!(Number.isFinite(meta.fps) && meta.fps > 0)) throw new Error('page FPS must be finite and positive');
+  if (!(meta.width > 0 && meta.height > 0 && meta.width % 2 === 0 && meta.height % 2 === 0)) throw new Error('canvas dimensions must be positive even integers for yuv420p');
   return { browser, page, meta };
+  } catch (error) {
+    await browser.close();
+    throw error;
+  }
 }
 
 // The GPU string tells you whether Chrome is drawing on the GPU or in software (SwiftShader).
@@ -42,6 +60,7 @@ export async function gpuName(page) {
 
 // Draws frame t and returns the PNG bytes. `label` stamps a small time code in a corner (for sheets).
 export async function grabPng(page, t, label = false) {
+  page.assertHealthy?.();
   const b64 = await page.evaluate(({ t, label }) => {
     window.__renderFrame(t);
     let c = document.getElementById('c');
@@ -58,6 +77,7 @@ export async function grabPng(page, t, label = false) {
     }
     return c.toDataURL('image/png').split(',')[1];
   }, { t, label });
+  page.assertHealthy?.();
   return Buffer.from(b64, 'base64');
 }
 

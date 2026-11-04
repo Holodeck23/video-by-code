@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import subprocess
 import sys
@@ -46,7 +47,7 @@ def run(cmd: list[str]) -> subprocess.CompletedProcess:
 
 
 def probe(path: Path) -> dict:
-    p = run(["ffprobe", "-v", "error", "-count_packets", "-show_streams", "-show_format",
+    p = run(["ffprobe", "-v", "error", "-count_frames", "-show_streams", "-show_format",
              "-of", "json", str(path)])
     if p.returncode != 0:
         raise SystemExit(f"ffprobe failed: {p.stderr.strip()}")
@@ -101,10 +102,10 @@ def check_streams(rep: Report, info: dict, a: argparse.Namespace, suffix: str) -
     else:
         rep.add("fps", "PASS" if rfr == afr else "WARN", f"r={v.get('r_frame_rate')} avg={v.get('avg_frame_rate')}",
                 "r == avg", "" if rfr == afr else "variable frame rate")
-    n = int(v.get("nb_read_packets") or v.get("nb_frames") or 0)
+    n = int(v.get("nb_read_frames") or v.get("nb_frames") or 0)
     vdur = float(v.get("duration") or info["format"].get("duration") or 0)
     if a.expect_seconds:
-        want_n = round(a.expect_seconds * fps)
+        want_n = math.floor(a.expect_seconds * fps + 0.5)
         rep.add("frame count", "PASS" if n == want_n else "FAIL", n, want_n,
                 "" if n == want_n else f"{n - want_n:+d} frames; check -shortest and the renderer's -frames:v")
         ok = abs(vdur - a.expect_seconds) <= 0.5 / fps
@@ -141,12 +142,12 @@ def check_streams(rep: Report, info: dict, a: argparse.Namespace, suffix: str) -
     return v, au, fps
 
 
-def parse_intervals(log: str, key: str) -> list[tuple[float, float]]:
+def parse_intervals(log: str, key: str, duration: float) -> list[tuple[float, float]]:
     if key == "black":
         return [(float(s), float(e)) for s, e in re.findall(r"black_start:([\d.]+) black_end:([\d.]+)", log)]
     starts = [float(x) for x in re.findall(r"freeze_start: ([\d.]+)", log)]
     ends = [float(x) for x in re.findall(r"freeze_end: ([\d.]+)", log)]
-    return [(s, ends[i] if i < len(ends) else float("nan")) for i, s in enumerate(starts)]
+    return [(s, ends[i] if i < len(ends) else duration) for i, s in enumerate(starts)]
 
 
 def analyse_pass(rep: Report, path: Path, has_audio: bool, a: argparse.Namespace, vdur: float) -> dict:
@@ -163,7 +164,7 @@ def analyse_pass(rep: Report, path: Path, has_audio: bool, a: argparse.Namespace
             "" if ok else (errors[0][:80] if errors else f"exit {p.returncode}"))
     out: dict = {"decode_errors": errors[:20]}
     for key, label in (("black", "black intervals"), ("freeze", "frozen intervals")):
-        iv = parse_intervals(log, key)
+        iv = parse_intervals(log, key, vdur)
         out[key] = iv
         total = sum(e - s for s, e in iv if e == e)
         txt = ", ".join(f"{s:.2f}-{e:.2f}" for s, e in iv[:4]) + (" ..." if len(iv) > 4 else "")
@@ -173,7 +174,8 @@ def analyse_pass(rep: Report, path: Path, has_audio: bool, a: argparse.Namespace
         mp = re.search(r"True peak:\s*\n\s*Peak:\s*(-?[\d.]+|-inf) dBFS", log)
         lufs = float(mi.group(1)) if mi else None
         tp = float(mp.group(1)) if mp else None
-        out["integrated_lufs"], out["true_peak_dbtp"] = lufs, tp
+        out["integrated_lufs"] = lufs if lufs is None or math.isfinite(lufs) else str(lufs)
+        out["true_peak_dbtp"] = tp if tp is None or math.isfinite(tp) else str(tp)
         if lufs is None:
             rep.add("loudness", "FAIL", "unmeasured", "")
         elif a.lufs is not None:
@@ -279,7 +281,7 @@ def main() -> int:
           f"{sum(r['status'] == 'WARN' for r in rep.rows)} warn, {len(rep.rows)} checks")
     out = a.json or a.video.with_name(a.video.stem + ".verify.json")
     out.write_text(json.dumps({"video": a.video.name, "status": status, "checks": rep.rows,
-                               "analysis": extra, "audio_sync": sync}, indent=2))
+                               "analysis": extra, "audio_sync": sync}, indent=2, allow_nan=False))
     print(f"report: {out}")
     return 1 if rep.failed() else 0
 

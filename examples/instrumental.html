@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Signal / form</title>
+<style>html,body{margin:0;background:#080f16}canvas{display:block}</style></head><body>
+<canvas id="c" width="1920" height="1080"></canvas><script src="../lib/harness.js"></script>
+<script>
+/*FEATURES*/
+// Default data is a synthetic teaching pattern. build-visualizer.py replaces it with measured RMS.
+const FEATURES={rate:30,duration:12,rms:Array.from({length:360},(_,i)=>.18+.6*Math.exp(-(i%15)/4))};
+/*END_FEATURES*/
+window.DURATION=FEATURES.duration;window.FPS=30;
+const ctx=document.getElementById('c').getContext('2d'),R=H.rng('orbits');
+const DOTS=Array.from({length:180},()=>({a:R.range(0,Math.PI*2),r:R.range(260,620),speed:R.range(.03,.12),size:R.range(1,4)}));
+function level(t){const k=H.clamp(t*FEATURES.rate,0,FEATURES.rms.length-1),i=Math.floor(k);return H.lerp(FEATURES.rms[i],FEATURES.rms[Math.min(i+1,FEATURES.rms.length-1)],k-i);}
+window.__renderFrame=t=>{
+ ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.fillStyle='#080f16';ctx.fillRect(0,0,1920,1080);
+ const e=level(t),cx=960,cy=565;ctx.strokeStyle='#20454e';ctx.lineWidth=2;
+ for(let i=0;i<4;i++){ctx.beginPath();ctx.ellipse(cx,cy,300+i*120,130+i*55,-.2,0,Math.PI*2);ctx.stroke();}
+ for(const d of DOTS){const a=d.a+d.speed*t;ctx.fillStyle='#9ce4c0';ctx.globalAlpha=.2+.5*e;ctx.beginPath();ctx.arc(cx+Math.cos(a)*d.r,cy+Math.sin(a)*d.r*.45,d.size*(1+e),0,Math.PI*2);ctx.fill();}
+ ctx.globalAlpha=1;const glow=ctx.createRadialGradient(cx,cy,10,cx,cy,240+e*130);glow.addColorStop(0,'#86e0b9');glow.addColorStop(.22,'#22796e');glow.addColorStop(1,'#080f16');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(cx,cy,240+e*130,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#080f16';ctx.beginPath();ctx.arc(cx,cy,85+e*40,0,Math.PI*2);ctx.fill();
+ ctx.font='700 54px Arial,sans-serif';ctx.fillStyle='#dbe8df';ctx.fillText('SIGNAL / FORM',130,130);
+ ctx.font='28px Arial,sans-serif';ctx.fillStyle='#96b1b7';ctx.fillText('Energy changes scale. Time carries motion.',130,950);
+ ctx.fillStyle='#9ce4c0';ctx.fillRect(130,990,1660*H.clamp(t/window.DURATION,0,1),4);
+};window.__ready=document.fonts.ready;
+</script><script src="../lib/player.js"></script></body></html>

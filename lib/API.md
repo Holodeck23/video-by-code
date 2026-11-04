@@ -81,3 +81,12 @@ node render.mjs <page.html> --out out.mp4 [--fps 30] [--from 0] [--to <DURATION>
 - `--audio page` renders `window.scoreSound` offline through `SOUND.renderOffline` and muxes it.
 - `--voice` mixes a narration track over the effects; the page's sound is rendered in voiceover mode.
 - The canvas size sets the output size. Frame `n` is drawn at `t = from + n / fps`.
+
+## 5. Export limits and reproducibility
+
+- Video output is H.264, 8-bit yuv420p, limited-range BT.709 with AAC when audio is present. It is a compatibility export, not a 4:4:4 archival master.
+- Ranges must satisfy `0 <= from < to <= DURATION`. Output contains `round((to-from)*fps)` frames; choose frame-aligned durations for an exact requested length. Frame 0 samples `from`; the endpoint `to` is exclusive.
+- `--stills t0,t1` with `--outdir DIR`, and `--sheet N --out sheet.jpg`, use the same drawing function. Still times may include the page endpoint for inspection.
+- Audio and narration files are timed from page time zero. Range exports trim all tracks by `from`, then pad/trim to the exact frame-derived duration. `--voice` also uses page effects in voiceover mode unless `--audio` is explicitly set.
+- Noise and score choices are seeded. Native Web Audio processing can differ by tiny floating-point rounding across runs or browser versions. Compare waveform tolerance; do not promise byte-identical PCM. Video seek determinism is tested in the same browser/font environment; cross-machine pixel hashes are not promised.
+- Renderer owns its headless Chrome and ffmpeg children and closes them on errors. It does not manage other sessions or browsers.
