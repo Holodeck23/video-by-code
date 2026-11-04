@@ -9,7 +9,7 @@ the pipeline works; a finished film also needs a visual and listening review.
 
 ## First successful render
 
-Requires Node.js (tested with 22+), Python 3.11/3.12, `uv`, ffmpeg/ffprobe with libx264
+Requires Node.js (validated with 26.12), Python 3.11/3.12, `uv`, ffmpeg/ffprobe with libx264
 and AAC, and installed Google Chrome. The reference environment is macOS on Apple Silicon.
 The renderer uses system Chrome, not a bundled Playwright download. Other platforms
 need their own smoke test; GPU flags and the optional `say` voice fixture are Mac-specific.
@@ -87,8 +87,8 @@ not promised. See the validation record for the evidence actually obtained.
 
 ## Checkpoint and backup
 
-Commit completed code units. Keep a production log beside the media. This checkout has
-no remote by design. `bash tools/backup.sh /absolute/backup/directory` preserves source
-history in a local git bundle; keep the backup outside the brain/vault media evidence
-folders. Export a clean distributable and a readable handbook with
+Commit completed code units and push them when a remote is configured. Keep a production
+log beside the media. For a local-only checkout, `bash tools/backup.sh /absolute/backup/directory`
+preserves source history in a local git bundle; keep the backup outside the brain/vault
+media evidence folders. Export a clean distributable and a readable handbook with
 `uv run tools/export-handbook.py --out /absolute/delivery/directory`.

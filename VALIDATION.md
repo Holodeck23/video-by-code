@@ -22,6 +22,7 @@ alignment pipeline discussed is supplied by this repository.
 | Prompt builder | Default/content/inline/saved variants and unknown/missing-input failures tested |
 | Style samples | Eight separate still studies and seek checks; sampled material study, not full films |
 | Sharing | Gitleaks working snapshot and all reachable commit history; npm audit; manual content/provenance review |
+| Clean reproduction | Fresh ZIP extraction + `npm ci`; 11 documented install, render, verify and prompt/card steps passed |
 
 The complete private evidence set is kept in the production home outside this repo.
 The shared kit includes reproducible test scripts and this concise result record, not

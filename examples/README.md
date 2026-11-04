@@ -11,6 +11,7 @@ the checkout. Use the four-second starter before these examples.
 | `narrated-explainer.html` | 36 s / landscape | Five scenes, phrase captions, local voice fixture; no web assets |
 | `vertical-short.html` | 12 s / vertical | Separate vertical composition and procedural effects |
 | `instrumental.html` | track length / landscape | Audio-envelope-driven visualizer via generated feature script |
+| `styles/*.html` | 8 s / landscape | [Eight sampled material studies](styles/README.md), with limited animation |
 
 The two handoff exercises are described in the [narrated](../docs/recipes/narrated-explainer.md)
 and [vertical](../docs/recipes/vertical-short.md) recipes. `make-narration.py` requires macOS
