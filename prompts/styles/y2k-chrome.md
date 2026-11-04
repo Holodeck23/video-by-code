@@ -92,7 +92,7 @@ Glossy, rounded, watery. Minor sounds go inside `k.minor(fn)`.
 - drawing / writing: letters inflate with `k.play('pop', t, {f: 480 + 20 * i, gain: 0.4})` per letter.
 - scene change (liquid morph): a wobbling low sine (`k.tone` around 140-220 Hz, gain 0.06, dur = morph length) with brown-noise slosh (`k.noise` lowpass 300 Hz, gain 0.1) and a soft panel glide (pink bandpass 500 Hz, q 0.7, gain 0.07).
 - wrong / right: wrong is a triangle `k.tone` falling 340 to 110 Hz (`glideTo: 110`, dur 0.45, gain 0.3), a sine twin at 360 to 116 (gain 0.2) and `k.play('thud', t, {f: 100, gain: 0.85})`. Right is a rising pair `'C5'`, `'G5'` (gain 0.1), 0.08 s apart.
-- counters: `k.play('pop', t, {f: 520, gain: 0.45})` at most 40 per second, `f` rising to 560 near the end.
+- counters: use short bright pops near 520Hz, limited to twelve per second. Let pitch rise modestly as the count approaches its destination, then leave room for the final accent.
 - key number (the biggest hit): `k.play('impact', t, {f: 90, gain: 0.85})` and a triangle chord `'D4'`, `'A4'`, `'C#5'`, `'E5'`, `'F#5'` staggered 0.05 s (dur 1.5, gain 0.09, pans -0.4 to 0.4).
 - takeaway: `'D3'` triangle (dur 1.3, gain 0.16) under the last letter.
 - bed or music: `k.music(0, DURATION, {mood: 'bright', bpm: 90, key: 'D', gain: 0.42})`.

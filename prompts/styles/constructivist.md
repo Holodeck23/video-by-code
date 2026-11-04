@@ -78,7 +78,7 @@ A red wedge drives across the sheet. Apex at (tx, 540); the base 3600 px behind 
 
 ## Sound palette
 A print works: slams, a ram, brass shouts.
-- element appears (slab or slogan slam): `k.play('slap', t, {gain: 0.55})` with `k.play('thud', t, {f: 110, gain: 0.5})`; times snapped up to the next 1/15 s.
+- element appears (slab or slogan): combine a slap at gain 0.5 with a 115Hz thud at gain 0.45; schedule the landing on the next 15fps pose boundary.
 - label lands: the same slam at 0.5-0.6 gain inside `k.minor`.
 - arrow completes: a 0.4 s `k.noise` (brown, lowpass, f 350, gain 0.2) under the growth; no ding.
 - drawing / writing: for the ticker, `k.play('typing', t, {dur: textLength/40, gain: 0.4})`.
@@ -86,7 +86,7 @@ A print works: slams, a ram, brass shouts.
 - shout: two sawtooth `k.tone` per note (f at x1 and x1.012, dur 0.4-0.7, gain 0.035, `a: 0.02`), a short minor or major cluster; major for correct, minor for wrong.
 - scene change (wedge): a 0.95 s brown-noise lowpass `k.noise` (f 500, gain 0.45, `a: 0.4`), a pink bandpass `k.noise` from +0.2 s (f 900, gain 0.16), and a sawtooth `k.tone` gliding 45 to 72 Hz (`glideTo`, gain 0.1).
 - wrong / right: wrong is `k.play('stamp', t, {gain: 1.0})` plus a low brass shout on C3 and Db3; right is a stamp at 0.5 plus a major shout on C4, E4, G4.
-- key number: `k.play('impact', t, {gain: 1.7})`, `k.play('thud', t, {f: 70, gain: 0.9})`, `k.play('stamp', t, {gain: 0.9})`, then a shout on C3, G3, C4, E4, 0.7 s.
+- key number: use one impact at gain 0.8, supported by a low 75Hz thud at gain 0.45 and a stamp at gain 0.4. An optional short C-minor chord follows; leave headroom and inspect the offline peak.
 - takeaway: `k.play('stamp', t, {gain: 0.6})`, a short shout on F3, A3, C4, then a resolving shout on C3, G3, C4, E4.
 - bed or music: `k.bed(0, DURATION, {kind: 'hum', gain: 0.35})` and `k.bed(0, DURATION, {kind: 'room', gain: 0.4})`; counter digits are 30 ms bandpass `k.noise` ticks (f 1500) with a 130 Hz `k.tone`, spacing 0.16 s shrinking to 0.085 s.
 

@@ -92,7 +92,7 @@ Needle and floss, cloth, wood. Count stitching sounds per window, not per cell.
 - label lands: one pass at gain 0.7.
 - arrow completes: one pass, gain 0.9.
 - scene change: cloth drag, `k.noise(t, {color: 'pink', filter: 'bandpass', f: 560, q: 0.6, dur: d + 0.1, gain: 0.13, a: d*0.45})` plus brown lowpass at 300 Hz (gain 0.09).
-- wrong: floss yank `k.noise(t, {filter: 'bandpass', f: 1300, q: 0.8, dur: 0.16, gain: 0.3, a: 0.01, pan: 0.5})`, hoop knock, `k.tone(t, {f: 'D3', type: 'triangle', dur: 0.16, gain: 0.2})` then `'A2'` (dur 0.32, gain 0.22). right: a pass plus `k.play('success', t, {f: 'G5', gain: 0.6})`.
+- wrong: a brief 1300Hz bandpass thread pull at gain 0.25 and 0.15s duration, followed by a quiet hoop knock. Under it use a triangle D3, then A2 after 0.12s. The corrected stitch gets k.play('success', t, {gain: 0.45}).
 - key number: re-stitch ticks as single passes (at most 6 per second, gain 0.5), then the hoop knock: `k.tone(t, {f: 150, glideTo: 80, dur: 0.2, gain: 0.35})` with `k.noise` bandpass 600 Hz, q 2, dur 0.05, gain 0.25, then `k.play('impact', t, {gain: 1.2})` and `k.play('ding', t, {f: 'E5', gain: 0.6})`.
 - takeaway: scissor snip, two 25-35 ms bandpass noises at 2300 Hz then 1800 Hz (0.04 s apart, gain 0.3), then `k.play('ding', ...)` on C4, G4, E5, 0.09 s apart, gain 0.46 falling by 0.04.
 - bed or music: `k.bed('room', 0, DURATION, {gain: 0.4})` and `k.music(0.2, DURATION - 0.2, {mood: 'dreamy', bpm: 60, key: 'F', gain: 0.22})`.

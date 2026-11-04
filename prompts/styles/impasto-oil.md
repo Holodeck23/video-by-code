@@ -9,7 +9,7 @@ avoid_for: small text, tables, fast or technical content, anything that needs li
 
 # Impasto Oil Canvas
 
-The viewer is looking at a thick oil painting under a raking light. The sky or ground is made of thousands of short, loaded strokes that follow a swirling flow, and each stroke stands off the canvas: a bright ridge on its upper-left, a dark edge on its lower-right, colour broken inside the stroke. Everything on top (arrows, rings, words, numbers) is laid on in the same fat paint, so the diagram looks painted on the canvas, not pasted over it.
+A thick painted surface catches light from the upper-left. Thousands of curved, pigment-heavy dabs follow the ground's flow field; each carries a light ridge, a darker lower edge and broken colour within its body. Paint the arrows and type with the same loaded brush so the explanation belongs to the surface.
 
 ## Palette
 | Role | Hex | Notes |
@@ -87,7 +87,7 @@ Story daubs sit above the lit sheet; they carry their own shadow and ridge, so t
 - label lands: one `k.play('stroke', t, { gain: 1.1, dur })` per word, a daub at its start, `minor: true`.
 - arrow completes: no extra hit; the drag is the sound.
 - drawing / writing: `k.play('stroke', a, { dur: b - a, gain: 1.1 })`, then a daub every 0.09 s (first one at full gain, the rest at 0.55), at most 11 a second.
-- scene change: a palette knife mix: two bandpass scrapes (`k.noise`, f 1400, q 2.6, gain 0.2, dur 0.22 and 0.2 s, panned left then right) with a brown lowpass layer (f 400, gain 0.18), then `k.play('tock', t + 0.62, { f: 1400, gain: 0.25 })`.
+- scene change: a palette knife scrapes twice, first left and then right. Use bandpass noise near 1.4kHz for about 0.2s per scrape, underlaid with a quiet 400Hz brown-noise layer. Finish with a dry high tock about 0.6s after the first scrape.
 - wrong / right: wrong is two knife scrapes (gain 1.4) plus `k.play('thud', t, { gain: 0.5, f: 110 })`, and falling triangle tones Ab3 then F3 (gain 0.17). Right is `k.play('success', t, { gain: 0.45, f: 'G5' })`.
 - key number: `k.play('impact', t, { gain: 0.85 })`, `k.play('slap', t, { gain: 0.5 })`, two daubs at double gain, `k.play('ding', t, { f: 'Bb4', gain: 0.5 })`, tones Eb5 and G5 (dur 1.3, gain 0.07).
 - takeaway: brushed words, then `k.play('ding', t, { gain: 0.45, f: 'Eb4' })` and a rolled chord G4, Bb4, Eb5.

@@ -67,7 +67,7 @@ Widths at 1920: 1.4-2px for links, 5px for the active path, 1.6px for fine fills
 - Arrow: a doubled shaft chord (offset 1.5px) grown by `p`, then two barbs 27px long at +-0.5 rad appear at completion; nails at the start, the tip and both barb ends (r 3.9-4.5px). Cream.
 - Label: a kraft tag nailed at its top centre (nail r 4.2px), shadow offset (6, 9) alpha 0.35, clipped upper corners (12px), vertical gradient between the two kraft colours. It drops in with `H.ease.outBack` over 0.28s from 90px above, rotated 0.25 rad that settles to 0.
 - Picture tags: a #ead9b4 card with a brown ink doodle at 3% line weight, a caption underneath.
-- Emphasis: a red thread wound round a ring of 14-18 nails (ellipse), two chords per nail (`k -> k+1` and `k -> k+2`), nails appearing 0.02s apart, 0.35-0.4s total.
+- Emphasis: wind contrasting red thread around 14-18 perimeter pins to create an ellipse. Connect each pin to its next neighbour and the one beyond it; build the outline over roughly 0.4s.
 - Wrong: red ring and a red tag ("x"), the wrong path in red. Right: re-wind the correct path in gold, then a red kraft tag with a check.
 - Chart: axes of silver thread between three nails, points as nails (r 5.4px) joined by a line of three wraps (offset 2.25px) in gold, one nail per point appearing as the line reaches it.
 
@@ -87,11 +87,11 @@ The camera travels along the board to the next station; the seam between boards 
 3. `H.grain(ctx, t, {strength: 0.035, cell: 2, fps: 12, mono: true})`.
 
 ## Sound palette
-Define `tap(t, g, pan)`: `k.noise(t, {dur: 0.02, filter: 'bandpass', f: 2300, q: 5, gain: 0.22*g, a: 0.001, pan})`, `k.tone(t, {f: 1150, dur: 0.05, gain: 0.05*g, a: 0.001, pan})`, `k.tone(t, {f: 210, glideTo: 140, dur: 0.08, gain: 0.22*g, a: 0.001, pan})`. Define `pluck(t, f, g, pan)`: `k.tone(t, {f, type: 'triangle', dur: 0.28, gain: 0.12*g, a: 0.002, r: 0.2, pan})` and a 15ms bandpass noise at 1.2kHz (gain 0.06*g).
+A pin contact combines a 20ms bandpass noise click near 2.3kHz with a quiet short 1.15kHz tone and a low downward thump. A thread pluck uses a triangle tone with a 0.28s decay plus a faint 15ms bright noise attack. Scale gain by pin size and pan to the contact location; never let a small pin compete with the result cue.
 - element appears: `tap` per nail, at most one every 0.07s in a run (gain 0.6); wrap in `k.minor`.
 - label lands: `tap(t_land, 0.75, pan)`, where `t_land = st + 0.37*0.28`.
 - arrow completes: a short winding rub then `tap(t, 0.5, pan)` at the tip.
-- drawing / writing (winding): `k.noise(t0, {dur: d, color: 'pink', filter: 'bandpass', f: 900, q: 0.9, gain: 0.07, a: 0.1})` plus a `pluck` per chord, at most 4-9 per second, pitch `f*(1 + 0.06*(i%3))` with f 165-262Hz. Burning: pink bandpass at 2.2kHz (gain 0.05) plus 8ms crackle grains (f 1400-2300, gain 0.07-0.15) every 50-120ms from `H.rng`.
+- drawing / writing: use a soft 900Hz pink-noise scrape throughout the winding interval, with sparse triangle plucks at four to nine contacts per second. Pick the base pitch between 165 and 262Hz and vary it slightly by thread. A burning thread instead gets a quiet 2.2kHz noise layer with seeded short crackles; schedule these events outside the frame loop.
 - scene change: `k.noise(t, {dur: d, color: 'brown', filter: 'lowpass', f: 380, gain: 0.16, a: d*0.45})`.
 - wrong / right: wrong is two detuned sawtooth tones (98Hz and 139Hz, `glideTo` 94% of each, 0.5s, gain 0.08) plus `k.play('thud', t, {f: 110, gain: 0.5})`; right is a taut thrum, three triangle tones C3, G3, E4 (1.1s each, 35ms apart, gain 0.077) plus `tap`.
 - key number (biggest hit): `tap(t, 1.5, pan)`, `k.play('impact', t, {gain: 1.1})`, a four-note thrum C3 G3 C4 E4 (gain 0.11) 0.02s later.
@@ -101,7 +101,7 @@ Define `tap(t, g, pan)`: `k.noise(t, {dur: 0.02, filter: 'bandpass', f: 2300, q:
 ## Signature moves
 - Curves emerge from straight chords: a cardioid or glowing ring winds up chord by chord.
 - A weight is the number of wraps on a thread.
-- A red thread wound round a ring of nails for emphasis.
+- A red elliptical thread border isolates the decisive result from the rest of the weave.
 - Counters strung as nail-and-thread seven-segment digits.
 - Words burned in left to right with a travelling ember.
 - Kraft tags drop and are nailed at their top.

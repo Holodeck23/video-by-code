@@ -77,8 +77,8 @@ Turn the page: 0.7s with `H.ease.inOutCubic`. Draw the destination sheet fully; 
 
 ## Sound palette
 A person reading the morning paper.
-- element appears (picture, label): `tap`: a 30 ms bandpass `k.noise` (f 1100, q 1.2, gain 0.22), panned to the item's x.
-- label lands: the same tap at gain 0.6; counters tick with an 18 ms bandpass noise (f 2000, q 1.6, gain 0.22), the rate rising to 11 per second.
+- element appears (picture or label): a 30ms bandpass tap centred near 1.1kHz, at gain 0.2 and Q about 1.3, panned toward the item's horizontal location.
+- label lands: use a quieter version of that tap. Counter changes get an 18ms noise tick around 2kHz, with Q 1.5 and gain 0.18, limited to eleven changes per second.
 - arrow completes / drawing: `k.play('stroke', t, {dur: drawLength, gain: 1.2, minor: true})`; for the data curve across its whole draw, gain 0.8.
 - writing: `k.play('typing', t, {dur: 0.5, gain: 0.55, minor: true})` for the pull quote, as a burst of linotype.
 - grease pencil: `k.play('chalk', t, {dur: 0.33, gain: 0.9})`; heavier for the key number (1.1).

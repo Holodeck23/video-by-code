@@ -39,7 +39,7 @@ Complement table (index of the opposite pigment), used for the "vibration": lemo
 ```
 T  = study colour at the dab centre
 want = T * (n + 1) - acc[cell]            // what this dab must add to keep the cell on target
-cost(p) = (P.r-want.r)^2 + 1.2*(P.g-want.g)^2 + (P.b-want.b)^2 + ((q*977 + p*0.37) % 1) * 2600
+cost(p) = squaredColourDistance(P, want, greenWeight=1.2) + seededTieBreak(q,p)*2600
 if dark(T) (r+g+b < 330): cost *= 0.78 for violet, ultramarine, deep ultramarine
 best = argmin cost, second = runner-up
 pick = best; if (q*7919)%1 < 0.16 then second; else if (q*7919)%1 > 0.93 then complement(best)
@@ -79,7 +79,7 @@ The per-dab stable term in `cost` replaces random noise so the field is identica
 - Everything else is slow: the 6 fps shimmer, a 0.9 s header move, nothing faster.
 
 ## Scene changes
-The canvas is re-dabbed in a diagonal sweep over 0.8 s. Define the front `f = lerp(-180, 2430, H.ease.inOutCubic(u))` and measure each dab by `d = f - (x + y*0.35)`.
+Replace the old painting with a diagonal front of new dabs over 0.8s. Move the front smoothly from beyond the upper-left to beyond the lower-right; evaluate each dot's signed distance from that front using x plus 0.35 times y.
 - `d > 0` (behind the front): the dab samples the NEW study, and within the first 135px behind the front its radius pops with `outBack` (a bright band of new dabs).
 - `-75 < d < 0` (just ahead): the dab shrinks to 50% of its size.
 - Fine dabs are clipped to the same slanted line: old overlay ahead of the front, new overlay behind it.

@@ -85,7 +85,7 @@ This style sounds like air, not objects.
 - drawing / writing: typed captions are silent; counters use 20 ms pink bandpass grains at 1.4 kHz (gain 0.16), at most 12 per second.
 - scene change: a broad slow breath, pink bandpass (300 to 800 to 350 Hz over 1.0 s, gain 0.13).
 - wrong: a falling pair, `k.tone` D4 (0.5 s) then Bb3 (0.9 s, gain 0.13) with a rising bandpass puff; right: a chord D4, A4, F#4 (1.4 s, gain 0.11).
-- key number (the biggest hit): `k.play('impact', t, {gain: 0.45})`, `k.tone(t, {f: 'D2', dur: 2.2, gain: 0.22})`, then `k.play('ding', t + 0.1, {f: 'D4', gain: 0.45})` and A4 70 ms later.
+- key number (the strongest accent): an impact at gain 0.4, a quiet sustained D2 under it, then a D4 ding after 0.1s and an A4 answer 0.07s later. Keep the low note below gain 0.2 and stop it within 2s.
 - takeaway: the chord D3, A3, F#4, A4, staggered 90 ms, 1.5 s, gain 0.1.
 - bed or music: `k.music(0, DURATION, {mood: 'dreamy', bpm: 64, key: 'D', gain: 0.5})`; the field as breath: a 0.95 s pink bandpass burst every 0.5 s, f 700-1200 Hz, `gain 0.05`, rougher (low q) when turbulence is high, smoother when ordered.
 

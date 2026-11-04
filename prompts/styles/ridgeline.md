@@ -26,16 +26,16 @@ One ink on one stock. Never colour; hierarchy is alpha and line weight.
 
 ## Ground and surface
 1. Fill #050505 every frame.
-2. Cached with `H.offscreen`, keyed by canvas size: **ink-density map**, built at 320x180 and stretched to the frame with smoothing: `d = 1 - 0.13*v - 0.06*f` where `v = 0.5 + 0.5 * noise.fbm2(x*0.045, y*0.045, 4)` (broad blotches) and `f = 0.5 + 0.5 * noise.n2(x*0.6, y*0.6)` (speckle); channels `(d, d-0.01, d-0.03)` so the ink is a hair warm.
-3. Cached: **stock layer**: black fill; add a warm lift built at 256x144 and stretched: `rgb(5 + 6v, 4 + 5v, 2 + 3v)`, `v` from `fbm2(x*0.03, y*0.03, 4)`; then 900 faint fibres from `H.rng(77)`, each a short curved stroke (length 4.5-21px, bend 0.6 rad, width 0.6-1.5px, colour rgb(c, c-2, c-5) with c 8-20).
+2. Cache an ink-density mask at 320x180, stretched smoothly to frame size. Combine a broad four-octave field at spatial frequency 0.045 with finer 0.6-frequency speckle. Let the broad component remove up to 13% opacity and the fine component up to 6%; bias the remaining ink slightly warm.
+3. Cache the stock separately: near-black with a broad warm variation, approximately RGB 5-11, 4-9, 2-5. Add 900 seeded fibres, each 5-21px long and under 1.5px wide, in faint warm grey. Keep every fibre fixed to the sheet.
 4. The plotted block is centred. Stack of N=60 rows, 570px wide, row pitch 9.9px, block height about 584px; optical centre sits 6px low because the peaks rise above their baselines.
 5. Per frame: traces, text, then the print pass.
 
 ## Mark-making
 **Trace** `trace(x0, x1, baseY, k, peaks, noiseAmt, row, sweep, lw)`: sample every 2px along x. For each x:
-1. Window: `env = sin(PI * clamp((u - 0.2) / 0.6))^1.6` (u = 0..1 across the trace), zero outside the central 60% so the edges stay flat.
+1. Window: confine signal displacement to the central 60% of each trace. Map that interval to a sine arch and raise it to power 1.6; outside it, force displacement to zero so the margins remain flat.
 2. Signal: sum of Gaussians, `h * exp(-0.5 * ((x - mu) / s)^2)`, times `env`.
-3. Texture: `noise.n3(x*0.32, row*0.9, t*0.8) * (0.9 + env*3.2*noiseAmt)` plus a slow broad term `noise.n3(x*0.06, row*0.45, t*0.3) * env * 9 * noiseAmt` with a second `H.noise` seed.
+3. Texture: combine fast fine-grained three-dimensional noise with a slower broad component. Make x vary about five times faster in the fine layer; give each row an independent phase. Multiply broad displacement by the signal envelope and noise amount, keeping the field analytic in absolute time.
 4. Point is `[x, baseY - max(-3, signal + texture) * k]`.
 Peak sets per row come from `H.rng(1000 + row)`: 4-7 peaks, centres `centre + r.gauss() * 54`, widths 6-25px, heights `9 + 78 * r()^1.7`; 45% of rows add a faint side lobe 82-142px off-centre, height 6-24px. For motion: centres drift `sin(t*0.9 + row*0.37 + j) * 4.5` and heights breathe `0.75 + 0.25 sin(t*1.3 + row*0.5 + 2j)`; this is closed-form in `t`.
 
@@ -97,7 +97,7 @@ Quiet laboratory: a stylus, a servo, a few soft low notes. Two answer pitches: A
 - Sixty lines sweep in one after another, each hiding the one behind.
 - The stack breathes between beats; the peaks are alive.
 - Noisy rows converge on one clean ridge as the plot reaches the bottom.
-- Three magnified traces act out guess, check, adjust, then fold into the stack.
+- Enlarge three selected traces to explain a prediction, its measured error and the resulting correction; then return them to their original rows.
 - A scribble ring and a dashed target mark the miss and the fix.
 - Tiny letter-spaced captions fade in character by character under a centred block.
 

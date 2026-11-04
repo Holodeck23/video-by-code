@@ -29,7 +29,7 @@ The viewer believes they are looking at a real cork wall covered in sticky notes
 
 ## Ground and surface
 Bake once with `H.offscreen('cork', 3200, 1600, fn)` and draw it at scale 1.5 times the camera zoom. Per pixel (seed `H.noise(12)` and `H.rng(9)`):
-1. `g1 = n2(x*0.21, y*0.21)`, `g2 = n2(x*0.55+40, y*0.55)`; `v = clamp(0.5 + 0.8*g1 + 0.45*g2 + (rand - 0.5)*0.3)`. Colour is the lerp of #b0804e to #d6aa70 by v.
+1. Build cork colour from two seeded noise fields, one broad and one about 2.6 times finer with a different coordinate offset. Blend them with a small independent grain term, clamp the result and use it to mix #b0804e with #d6aa70. The field is static and cached.
 2. Pores: where g2 > 0.42, mix toward #784e28 by `clamp((g2 - 0.42) * 5) * 0.85`; also 5% of pixels get a 0.6 mix at random.
 3. Luminance scale `1 + 0.1*n2(x*0.006, y*0.006) + (rand - 0.5)*0.12`, so the board has slow warm and cool patches and 1px granules.
 4. 260 old pin holes at random: radius 0.9-1.8px, dark rgba(40,20,5,0.6), plus a tiny highlight rgba(255,230,190,0.18) offset up-left.
@@ -88,7 +88,7 @@ No cuts and no erasing. Pull yarn from the last pin of one cluster to the first 
 
 ## Sound palette
 Office with a cork wall; pan follows the object's screen x, at most +-0.6.
-- element appears (note slap, at slap start + 0.11): `k.play('slap', t, {gain: 0.3 + 0.2*size})` plus pink lowpass `k.noise` (f 450 + 250*size, dur 0.08, gain 0.25 + 0.2*size) and a `k.tone` thud from 150 Hz to 65 (use `glideTo`), dur 0.1; size 0 for small notes and 1 for a big card.
+- element appears: about 0.11s into the note's slap, combine a dry paper hit, a brief pink-noise contact and a low tone gliding from 150Hz to 65Hz. Scale their gains with note size, keeping the combined peak below clipping; small notes should sound lighter than the main card.
 - label lands (pin seats, slap start + 0.14): bandpass `k.noise` f 1300 q 1.6 dur 0.035 gain 0.3 plus `k.tone` 260 with `glideTo: 140`, dur 0.07, gain 0.16.
 - arrow completes: a marker stroke at gain 0.8-1.1.
 - drawing / writing: touch-down tick (bandpass f 1500 dur 0.02 gain 0.18) then `k.play('stroke', t, {dur: strokeLength})`, one stroke per word, timed by the word's position inside the write window. Tape: `k.play('tape', t, {dur: 0.12, gain: 0.5})`.

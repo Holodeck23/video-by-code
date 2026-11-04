@@ -36,7 +36,7 @@ Everything is graphite. Right answers, key numbers and takeaways are graphite to
 6. Layers per frame, bottom to top: paper, history, tone layer (stump shading, cast shadows), smudge ghost, graphite layer, red layer, eraser crumbs, lamp, tool, grain.
 
 ## Mark-making
-**Graphite line** `pencil(points, width, alpha, seed, taperIn, taperOut)`. Resample every 4.5px, `H.wobble` with `{amp: 1.5, freq: 0.0067, seed}` (amp 1.0 for short or straight pieces). Draw in chunks of 3 points; for chunk at fraction `u`: `p = min(1, u/taperIn, (1-u)/taperOut)`, `p = 0.25 + 0.75*sqrt(p)`; flicker `f = 0.8 + 0.4 * (0.5 + 0.5 * noise(i*0.07, seed))`; alpha `a*p*f`, width `w * (0.55 + 0.45*p)`, butt caps, round joins. Draw-on uses `H.partial(pts, u)`.
+**Graphite line:** resample each path about every 4.5px, then use H.wobble at 1-1.5px amplitude. Draw short overlapping segments with round joins and butt ends. Taper pressure at both endpoints using the smaller of the start and end ramps, then lift that pressure into the 0.25-1 range with a square-root curve. Modulate opacity with low-amplitude seeded noise and width from 55% to 100% of its chosen weight. Reveal the resampled path using H.partial.
 
 **Pressure.** In a closed shape, strokes are heavier on the lower-right (shadow) side: multiply alpha and width by `0.8 + 0.24*side + 0.14*noise`, where `side` runs -1 to 1 across the shape from top-left to bottom-right.
 
@@ -78,7 +78,7 @@ Everything is graphite. Right answers, key numbers and takeaways are graphite to
 - The pencil tool (tip at the stroke end, 450x24px body at 0.72 rad, blurred shadow offset (33, 39)px) shows while anything is being drawn and is hidden otherwise. Between beats only the grain flickers; nothing else moves.
 
 ## Scene changes
-Turn the page. A fold line runs from `(xt, 0)` to `(xb, H)`, with `xb = W * (1-u) * 1.05 + 10`, `xt = xb + 270 * sin(u*PI) + 60 * (1-u)`, `u = H.ease.inOutCubic` over 0.65 s. Page 1 (frozen the instant the turn starts) shows to the left of the fold; the flap is its reflection across the fold, drawn as bare paper with a gradient (rgba(60,40,20,0.32), then rgba(255,250,240,0.12) at 0.25, then rgba(80,60,30,0.12) over 390px), an 8% mirrored show-through of the drawing, and a 10px blurred shadow (rgba(40,25,10,0.35), offset (-18, 9)). The new page is already rendered beneath, with a 90px shadow beyond the fold (rgba(30,20,10,0.35) to 0). Use it between chapters; inside a chapter, keep drawing on the same spread. The new page starts empty except for its history marks.
+Turn the page over 0.65s with H.ease.inOutCubic. Move an oblique fold from right to left, its top edge lagging the bottom by up to 300px. Freeze the outgoing illustration at the turn's start and reflect it across the fold at about 8% show-through. Shade the flap with a broad warm light/dark gradient and a 10px soft shadow. Draw the incoming sheet beneath the flap. Use this between chapters, while related additions stay on the same spread.
 
 ## Finishing passes (run every frame, same strength)
 1. Paper tooth on graphite and tone (above), page-anchored.
@@ -94,7 +94,7 @@ Soft graphite on toothy paper; the drawing sits well under the hits (scale every
 - label lands: same stroke, no accent; a dot or tap = `k.noise(t, {f: 1300, filter: 'bandpass', dur: 0.02, q: 1.5, gain: 0.18})`.
 - arrow completes: a short stroke for the head (0.07-0.12 s); nothing more.
 - hatching: flicks every 0.05-0.07 s, `k.noise(t, {f: 3000-3900, filter: 'bandpass', q: 1.1, dur: 0.035, gain: 0.07, a: 0.006})`, pan alternating +-0.08, fading by half across the pass.
-- scene change (page turn): `k.play('paper', t, {dur: 0.22, gain: 0.7})`, then `k.noise(t + 0.05, {color: 'pink', f: 600, filter: 'bandpass', dur: 0.6, q: 0.7, gain: 0.24, a: 0.28})`; at the fold's landing `k.play('slap', t, {gain: 0.35})` and a brown lowpass thud (f 400, dur 0.18, gain 0.25).
+- scene change: a paper rustle starts the turn; a low pink-noise band follows the fold for about 0.6s at gain 0.2, then a soft slap and low brown-noise thump mark the landing. Use the visual fold's completion time for those final contacts.
 - wrong / right: wrong = two hard red strokes at gain 1.8 plus `k.play('error', t, {f: 'E3', gain: 0.55})`; right = `k.play('success', t, {f: 'A5', gain: 0.75})` with the tick.
 - key number (biggest hit): re-pencil ticks `k.play('tick', t, {f: 2600 to 3600, gain: 1.1})`, at most 12 per second, slowing as the value settles; on the frame the final value first appears, `k.play('impact', t, {gain: 1.0})` and `k.play('ding', t + 0.01, {f: 'C6', gain: 0.42})`, then the red ring.
 - takeaway: `k.play('success', t, {f: 'G5', gain: 0.7})` as the underline ends, then `k.play('tock', t + 0.3, {f: 380, gain: 0.6})`, a pencil laid down.

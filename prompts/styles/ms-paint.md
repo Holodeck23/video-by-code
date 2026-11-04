@@ -50,7 +50,7 @@ Every operation has `{t0, dur, tool, colour, draw(p, rng), pen(p)}` where `p` is
 - **Selection / text box ants**: a dashed rectangle of 1px dots, alternating #000000 and #ffffff every other pixel.
 
 ## Type and numbers
-- Document text: Patrick Hand 400, rasterised on a scratch canvas and copied into the bitmap with a hard alpha threshold of 105-120, so edges are jagged. Headline 44 buffer px (132 on screen), second-level 34, key number 52 (156 on screen), story label 18-24 (54-72 on screen, never below 18), UI labels Inter 9px.
+- Document text: Patrick Hand 400, rasterised on a scratch canvas and copied into the bitmap with a hard alpha threshold of 105-120, so edges are jagged. Headline 44 buffer px (132px on screen), second-level 34, key number 52 (156 on screen), story label 18-24 (54-72 on screen, never below 18), UI labels Inter 9px.
 - Text arrives from a text box: draw an opaque white rectangle behind it (pad 4px) if it sits on top of art, reveal `floor(p * length)` characters over 0.1-0.35 s (about 25 chars/s for a headline), show the dashed text box and a 1px caret blinking at 1 Hz (`floor(t*2) % 2`) at the end of the typed text.
 - Numbers are retyped: the whole numeral is redrawn in an opaque white-backed box every frame it changes. Counts ease in-out over 1.2-1.5 s with thousand separators; percentages step 1 at a time.
 - Emphasis on a number: after it lands, an ellipse-tool circle in #ff0000, 3px, drawn on in 0.2 s, then "!!" typed beside it in red.

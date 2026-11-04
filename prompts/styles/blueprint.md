@@ -25,7 +25,7 @@ The viewer believes they are watching a plotter draw an engineering sheet onto o
 | Vignette | `#000819` | strength 0.3 |
 
 ## Ground and surface
-1. Paper, cached with `H.offscreen('paper', 960, 540, ...)` and drawn scaled up (one texel per 2 px). Base `#163a70` multiplied by `k = 1 + m + fade - edge`, with `m = 0.2 * fbm2(x * 0.008, y * 0.008, 4) + 0.06 * fbm2(x * 0.05, y * 0.05, 2) + 0.5 * max(0, fbm2(x * 0.004, y * 0.004, 3) - 0.15)` (use `H.noise(88)`), `fade` a radial lift of 0.16 centred at (20% W, 15% H) fading over 0.9 W (also add `fade * (40, 30, 25)` to R, G, B), `edge` a 0.3 darkening within 12% of the paper edge.
+1. Cache a half-resolution paper plate with H.offscreen and H.noise(88). Start at #163a70; modulate its brightness with three independent noise bands: broad mottling at 0.008 frequency and 0.2 amplitude, fine variation at 0.05 and 0.06 amplitude, and sparse positive blotches at 0.004 and 0.5 amplitude. Add a gentle warm radial lift near the upper-left, then darken the outer 12% of the sheet by up to 30%.
 2. Speckle: 1600 flecks of 1 to 3 px, 70% light `rgba(160,190,230,a)` and 30% dark `rgba(5,20,50,a)`, `a` 0.05 to 0.25 (light) or 0.1 to 0.3 (dark), seeded with `H.rng(4)`. Cache this with the paper.
 3. Grid: 1 px lines every 30 px at 0.045 alpha, every fifth at 0.10. Drawn over the ink (it is part of the paper).
 4. For a moving camera the sheet is a large world-space page (about 2.7 screens wide, 2 tall) with the paper cached at that size; speckle as a 1536 px repeating tile.
@@ -73,13 +73,13 @@ All ink is drawn onto one transparent "line layer", then finished (see Finishing
 No cuts. The camera tracks along the same sheet to the next region (across, then down). While it travels the plotter draws a connector leader to the next region with a caption on it. Optionally develop a large group with a wipe: a soft 90 px gradient mask moving across the group (`destination-in`) over 0.5 to 1.3 s. Stay continuous at all times; a new region is only a new place on the same paper.
 
 ## Finishing passes (run every frame, same strength)
-1. Uneven exposure: multiply the line layer's alpha by a mask cached in sheet space (`H.offscreen`): `0.74 + 0.26 * (0.5 + 0.5 * n2(x * 0.03, y * 0.03))`, minus 0.3 on about 7% of 2 px cells (pinholes). Apply with `destination-in` under the same camera transform so it stays attached to the paper.
+1. Cache an exposure mask in sheet coordinates. Mix 74% constant opacity with 26% smooth noise remapped into [0,1], then reduce opacity by 0.3 in a seeded 7% subset of 2px cells. Use destination-in to apply it to the line layer under the camera transform.
 2. Bleed: draw the line layer blurred 3.75 px at alpha 0.45, then blurred 0.75 px at alpha 0.95 over it (`ctx.filter`), so the white sinks slightly into the blue.
 3. Fold creases (static, cached along strips): at 1/3 and 2/3 of the sheet width and at the vertical middle. Across 80 px: transparent, `rgba(0,10,30,0.22)` at 0.48, `rgba(190,210,240,0.22)` at 0.50, `rgba(190,210,240,0.06)` at 0.56, transparent. Add 700 abraded fibres per crease (1 to 3 px, alpha 0.1 to 0.45, gaussian 2.7 px spread) and a radial 39 px wear spot (alpha 0.28) where two creases cross.
 4. `H.grain(ctx, t, { strength: 0.04, cell: 2, seed: 6, fps: 12, mono: true, blend: 'overlay' })`, then `H.vignette(ctx, { strength: 0.3, color: '#000819', inner: 0.55 })`.
 
 ## Sound palette
-A pen plotter in a quiet drawing office. Each line is a plot move: pen down, steppers whine, pen drags, pen up.
+Sound suggests a drafting machine: a small contact tick starts a stroke, a low motor note follows the travel, and a quieter release ends it.
 - element appears / pen down: `k.play('click', t, { f: 1300, gain: 0.3, minor: true })`, and at pen up `k.play('tick', t1, { f: 1900, gain: 0.12, minor: true })`.
 - label lands: letter-by-letter ticks: `k.play('tick', t, { f: 1500, gain: 0.2, minor: true })` per character, at most 20 per second, with a short stepper blip at 220 to 340 Hz.
 - arrow completes: a final `k.play('click', t, { gain: 0.35 })` at the arrowhead.

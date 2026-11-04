@@ -31,7 +31,7 @@ The viewer believes they are watching a pastel, over-played VHS tape of an imagi
 
 ## Ground and surface
 The picture is a pastel world drawn clean, then the whole frame goes through the tape pass. At 1920x1080 the horizon sits at y = 678.
-1. Sky: vertical gradient above. Stars: 90 specks (2.25px) in the top 55% of the sky, `H.rng(77)` positions, alpha (0.2-0.8) * (0.6 + 0.4 sin(3t + i)).
+1. Build the sky from the vertical gradient above. Place ninety seeded 2px stars within its upper half, each with a fixed base alpha and a slow, slight sinusoidal brightness change. Keep the stars stationary and avoid whole-screen twinkling.
 2. Sun (disc radius 315, centre y = 573, x per scene): gradient fill, then cut slices with `destination-out` on a scratch layer: gap k starts at centre - 0.42R + 36k + scroll, thickness 2.25 + 18f where f rises 0 to 1 from 0.45R above the centre to 0.3R below it; scroll = (21t) mod 39 (the slices creep downward). Behind it a radial glow from 0.8R to 1.6R, rgba(255,170,120) 45% to rgba(255,100,180) 0.
 3. Floor: vertical gradient; horizon haze band from 45px above to 90px below the horizon, rgba(255,140,210) peaking at 55% at stop 0.35. Grid in true perspective: vanishing point x = 960, focal length 390, camera height 1. Lengthwise lines at world x = 0.9i for i in -26..26 from depth 0.35 to 60; crosswise lines at depth 0.4 + 0.9k minus a scroll of (1.6t mod 0.9), y = horizon + 390/depth. Stroke three additive passes: 10.5px rgba(255,60,200) 22%, 4.5px rgba(120,240,255) 35%, 1.8px rgba(200,255,255) 90%. Finish with a 105px fade of rgba(255,150,215) 85% to 0 over the horizon so the lines melt into haze.
 4. Palms: segmented tapering trunk (22 segments, half-width 5.5% to 2.8% of height, curved by `lean`), three coconuts, 9 fronds fanned over 1.55 pi with random jitter +-0.12 rad, each a quadratic rib plus 16 leaflet pairs of length 0.11h*sin(u*pi) + 0.02h. Far pair at (262, horizon+60) h 390 lean -0.12 and (1680, horizon+75) h 375 lean 0.16 in #2a0b4c; near pair at (105, horizon+180) h 600 lean 0.28 and (1837, horizon+210) h 645 lean -0.3 in #1a0634.
@@ -83,11 +83,11 @@ Order: picture, then headline text, then 1, 2, 3, 4, then OSD stamps, then vigne
 Cost: this is 2M pixels per frame; reuse typed arrays and if needed run the pass at 960x540 and scale up.
 
 ## Sound palette
-- element appears: crackle, `k.noise(t, {dur: 0.05, filter: 'bandpass', f: 1800, q: 0.7, gain: 0.07})`, every third typed glyph.
+- element appears: add a faint 50ms bandpass crackle around 1.8kHz, at gain 0.06, on only every third typed character.
 - label lands: soft e-piano bell: `k.tone(t, {f: 'C5', dur: 1.4, gain: 0.12, a: 0.006})` plus the octave up at gain 0.03, dur 0.4.
-- arrow completes: neon draw: a 30ms zap (bandpass f 1200, q 1.5, gain 0.12), a sawtooth tone at 120 Hz for the line's length (gain 0.07), `k.play('neon', t, {dur: drawTime, gain: 0.8})`.
+- arrow completes: a brief bright zap starts a quiet low sawtooth while the neon path draws. Let the neon preset follow the draw duration at gain 0.6, ending when its head reaches the target.
 - drawing / writing: typed text crackles; counters tick at most 12/s: `k.noise` 12ms bandpass f 1900 q 3 gain 0.16, pan -0.5.
-- scene change (tape cut): two sawtooth tones sliding down to about 30% of their pitch over 0.28s (gain 0.07 and 0.05), `k.play('thud', c, {f: 85, gain: 0.45})`, a 15ms clunk at f 1300 gain 0.3, a 0.14s whirring noise (bandpass f 1800, q 3, gain 0.1), a 0.4s pink lowpass slide (f 900, gain 0.09) from c+0.12, and a brown thump at c+0.5 (f 400, gain 0.25, minor).
+- scene change: a tape-stop pitch drop lasts about 0.28s, followed by a low 90Hz contact and a short transport whirr. Leave a small quiet interval before the next picture stabilises; do not stack a loud effect for every simulated tape defect.
 - wrong / right: wrong = three sawtooth tones E4, Bb3, F3 with `glideTo` 82% of start, dur 0.6, gain 0.06, plus `k.play('thud', t, {f: 90, gain: 0.6})` and a loud crackle. right = a four-note major-seventh arpeggio F4 A4 C5 E5 at 0.07s steps, bell voice.
 - key number: `k.play('impact', t, {f: 80, gain: 0.9})`, a five-note sawtooth chord F3 C4 E4 G4 A4 (dur 1.6, gain 0.05, spread pan), then bells C5 and G5 at +0.05 and +0.2.
 - takeaway: bells F4 C5 E5 A5 at 0.1s steps (gain falling from 0.9) plus a low triangle F2 (dur 1.8, gain 0.16).
@@ -97,7 +97,7 @@ Cost: this is 2M pixels per frame; reuse typed arrays and if needed run the pass
 - The sunset sun whose stripes creep downward forever.
 - Objects glitch into existence slice by slice with a cyan/magenta ghost.
 - Every cut is a tape cut: blue screen, then a vertical roll into lock.
-- The header becomes the VCR's on-screen menu; the counter is tape-counter digits.
+- A deck-style on-screen header and transport counter provide a stable reading anchor above the drifting scene.
 - Pop-up windows and pill buttons doing the explaining, in pastel Windows-95 style.
 - Japanese captions with chroma split under every important line.
 

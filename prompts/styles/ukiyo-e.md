@@ -29,7 +29,7 @@ The viewer is looking at a hand-printed Edo-style woodblock print that has becom
 1. Fill paper #ecdfc2.
 2. Sky plate: vertical gradient #e3d2ab to y = 490, easing to #e7d8b4 at 82% of the sky height and #efe5cc at the horizon, across the whole scroll width (the world is 5 screens wide).
 3. Top bokashi: a navy-slate gradient from rgba(46,62,84,0.85) at y = 0 to transparent at y = 300.
-4. Water band at the bottom (y = 900 to 1080 at the scroll's foot): gradient #93b4cc, #4d7ca6 at 18%, #24507e at 60%, #16304f at the end. Over it 6 cream wave lines (rgba(241,232,210,0.75), 2.4 px) at 27 px pitch, each moving as `sin(x*0.03 + i*1.7 + t*1.2) * 4.5`, plus a key-ink waterline at the top edge (3 px). A small foam claw sits on the waterline every 225 px.
+4. The lower water band shifts from pale blue to deep navy toward the scroll's foot. Layer six pale 2.4px wave strokes about 27px apart. Their analytic phase combines horizontal position, row index and absolute time; keep displacement under 5px. Finish with a 3px dark waterline and a few widely spaced foam hooks.
 5. Gold mist bands 45 px tall along the top and bottom of the frame (gradient #cfac55 to transparent). Drawn last inside the scroll, before the finish.
 6. Scene dividers: scalloped gold cloud banks (see Mark-making), cached per x with `H.offscreen`.
 Everything above except the wave motion and sun position is static and can be cached per panel.
@@ -82,8 +82,8 @@ Build the print-run reveal by rendering the scene twice onto scratch canvases (`
 
 ## Finishing passes (run every frame, same strength)
 1. Build once, at 1920x1080, four noise fields with `H.noise(seed).fbm2`: a wood-warp field (cell 30 px, 3 octaves), a fine stretched streak field (cell 2 px, x scale 0.15, y scale 2.2), a paper tooth field (cell 3, x scale 2.5, y 0.6), and a blotch field (cell 40, 4 octaves).
-2. Per pixel (one `getImageData` and `putImageData` per frame): `lum = 0.3r + 0.55g + 0.15b` normalised; `inked = clamp((0.85 - lum)*1.6, 0, 1)`; `plate = clamp((0.94 - lum)*1.3, 0, 1)`; `grain = 0.5*sin(0.55*y + 26*warp + 0.004*x) + 0.8*fine`.
-3. Scale every channel by `s = (1 + grain*(0.07 + 0.07*inked)*plate) * (1 + 0.035*tooth + (H.rng noise - 0.5)*0.04) * (1 - 0.12*max(0, blot)*plate)`. Then add 6 to red and subtract 4 from blue where the pixel is paper, and scale blue by 0.97 (warm age).
+2. For each pixel, estimate luminance with green weighted most strongly. Derive two clamped masks: a darker ink mask and a broader plate mask. Combine fine seeded texture with a sinusoidal woodgrain whose phase bends gently in x; keep the grain attached to the paper.
+3. Modulate pigment channels by the woodgrain, increasing its effect in dark ink areas. Add a little paper-tooth variation and sparse blotch attenuation, then warm unprinted paper slightly by lifting red and reducing blue. Keep these variations subtle enough that the engraved outline stays continuous.
 4. Washi fibres: 300 hairs 15 to 60 px long, 0.5 to 1.1 px wide, as quadratic curves, half cream rgba(255,250,235,0.24), half brown rgba(120,95,60,0.13). Cache with `H.offscreen`; draw on top.
 5. `H.vignette(ctx, { strength: 0.25, color: '#5a3c1e', inner: 0.55 })`.
 Paper margins get tooth only; pigment blocks get the wood grain. That difference is the look.
@@ -93,12 +93,12 @@ Koto plucks, wooden clappers and paper. Scale: D, Eb, G, A, Bb (an Edo-style In 
 - element appears: `k.play('paper', t, { dur: 0.12, gain: 0.25, minor: true })`.
 - label lands: a koto pluck on `D4`, `A4`, `G4` etc. via `k.tone(t, { f: 'D4', type: 'triangle', dur: 1.0, gain: 0.12, a: 0.002 })` plus a quieter sawtooth twin at +1.2% pitch gliding to the note over 0.05 s (`dur: 1.3, gain: 0.05`).
 - arrow completes: `k.noise(t, { dur: d + 0.15, color: 'pink', filter: 'bandpass', f: 700, q: 1.1, gain: 0.08, a: d * 0.5, minor: true })` for the length of the current.
-- drawing / writing: `k.play('stroke', t, { dur: 0.4, gain: 0.7, minor: true })` for a ring or thread; chisel for numbers: `k.noise(t, { dur: 0.03, filter: 'bandpass', f: 1600, q: 2, gain: 0.3, a: 0.001, minor: true })` plus `k.tone(t, { f: 240, dur: 0.05, gain: 0.08, minor: true })`, repeating every 0.16 s tightening to 0.085 s.
+- drawing / writing: a soft stroke preset follows a painted line. For carved numbers, use a short 1.6kHz noise contact with a quieter low wooden tone, repeating about every 0.16s and accelerating only to roughly 0.09s. Treat the repeated contacts as minor sounds under narration.
 - scene change: `k.noise(t, { dur: 0.9, color: 'brown', filter: 'bandpass', f: 220, q: 1, gain: 0.18, a: 0.35 })` plus `k.play('paper', t + 0.2, { dur: 0.6, gain: 0.75 })`.
 - wrong / right: every verdict is `k.play('stamp', t, { gain: 0.6 })`. Wrong adds `k.play('thud', t, { f: 75, gain: 0.5 })` and a pluck on `Eb4` that glides down (`glideTo: 277`). Right adds plucks `G4`, `A4`, `D5` at 0.1 s steps.
 - key number: `k.play('impact', t, { gain: 1.3 })`, `k.play('thud', t, { f: 62, gain: 0.9 })`, a stamp, then plucks `D3 A3 D4 G4` at 0.03 s steps.
 - takeaway: five plucks `D3 A3 D4 Eb4 G4`, 0.07 s apart, gain falling 0.85 to 0.5, ending on a stamp.
-- bed: `k.bed(0, DURATION, { kind: 'room', gain: 0.3 })` and a very quiet water bed `k.noise(0, { dur: DURATION, color: 'pink', filter: 'lowpass', f: 450, gain: 0.035, a: 1, minor: true })`.
+- bed: optional quiet room ambience at gain 0.2. Water can add a still quieter lowpassed pink-noise bed near 450Hz, with a one-second fade-in; omit both beneath voiceover when they obscure speech.
 
 ## Signature moves
 - The print-run reveal: black keyblock lands first, colour plates press in one by one, the sky bokashi is wiped on last.

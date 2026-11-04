@@ -29,7 +29,7 @@ The viewer believes they are flying a camera through a small world built from a 
 Everything below is built from seeds and cached as module data, never from `t`.
 1. Sky: vertical `createLinearGradient` over the sky band with the four stops above. 90 star points from `H.rng(77)`, alpha `(1 - y/240) * r * 0.8`, only in the top 240px.
 2. Sun: a 14-wedge triangle fan (radius 75px, wedge shade `0.5 + 0.5*cos(angle - 2.3)` mixed between #ffd49a and #fff4d8) over a radial halo (r 45 to 480px, #ffd6a0 at 50% to 0). Fix the sun in world space, far away, so it shifts slightly as the camera moves.
-3. Terrain: a jittered grid, cell 4.4 world units over 240 by 250, vertices nudged by up to 0.38 of a cell (not on the border). Height = `fbm2(x*0.045, z*0.045, 4)*7` plus a valley bowl (`(|x - 4*sin(0.035 z)| / 55)^1.7 * 22`) plus a rise toward the far end, flattened to a fixed height under any landmark by `lerp(flat, h, smoothstep(r0, r1, dist))`. Split every cell into two triangles, flipping the diagonal on `(i + j) % 2` so no grain direction shows.
+3. Terrain: triangulate a 240x250-unit grid with cells about 4.4 units wide. Seed interior vertex offsets within 38% of a cell. Height combines a four-octave noise field at frequency 0.045, a curved valley whose centre meanders sinusoidally, and a gentle rise into the distance. Blend heights toward a flat platform around landmarks. Alternate each cell's triangulation diagonal to avoid a directional mesh pattern.
 4. Face colour from average elevation (bands in the palette); faces steeper than 0.55 mix 60% toward rock grey. Triangles under water level are replaced by flat water triangles with 0.35 noise bump.
 5. Scenery: 220 conifers by rejection sampling (altitude 0.6-12, noise mask, none on landmark plateaus): two 5-sided cones stacked (second one 25% lighter), random rotation, green from #286e5a to #468c64.
 6. Props (cards, pedestals, bars, a gem) are generated as triangle lists too and merged into the same list each frame.
@@ -76,15 +76,15 @@ Prefer one continuous flight. Cross-fade nothing. Between stations fly, and let 
 4. No grain, no blur, no outline pass. Flat colour is the finish; do not add `H.grain`.
 
 ## Sound palette
-- element appears (tag): faceted knock, `k.play('tock', t, {f: 470-640, gain: 0.45})` plus `k.noise(t, {dur: 0.02, filter: 'bandpass', f: knockF * 2.6, q: 3, gain: 0.18, a: 0.001})`.
+- element appears (tag): combine a dry tock between 470 and 640Hz with a short bandpass click at roughly 2.6 times that pitch. Keep the noise below gain 0.15, with a very fast attack.
 - label lands: the same knock with `pan` toward the object's side, gain 0.4.
-- arrow completes: `k.noise(t, {dur: 1.0, color: 'pink', filter: 'bandpass', f: 900, q: 1.2, gain: 0.06, a: 0.5, minor: true})` swell over the draw.
+- arrow completes: a quiet 900Hz pink-noise swell follows the arrow's draw interval, reaching its maximum near the midpoint. Use gain 0.05 and a soft half-second attack for a one-second path.
 - drawing / writing: a soft gust, 5 overlapping pink-noise bandpass swells (f 260, 420, 610, 470, 300, gain 0.04, each lasting 1.9 slots) timed to each camera move.
 - scene change (camera move): that gust, plus `k.bed(t, t + dur, {kind: 'wind', gain: 0.15})` while flying.
 - wrong: `k.play('thud', t, {f: 120, gain: 0.7})` and `k.play('error', t + 0.02, {f: 'G3', gain: 0.85})`. right: a glass strike at D5 and `k.play('success', t, {f: 'D5', gain: 0.45})`.
 - key number (biggest hit): `k.play('impact', t, {gain: 1.1})` then four glass strikes D4 A4 D5 F#5, 0.03 s apart, gain falling from 1.7.
-- takeaway: two glass strikes A4 then D5 (0.09 s apart) over `k.tone(t, {f: 'D3', type: 'triangle', dur: 1.2, gain: 0.12})`.
-- Glass strike: `k.tone(t, {f, type: 'triangle', dur: 0.9, gain: 0.09, a: 0.003})` plus `k.tone(t, {f: f * 2.32, dur: 0.45, gain: 0.03})`.
+- takeaway: a glass-like A4 strike answers with D5 about 90ms later. A low triangle D3 at gain 0.1 supports the pair for approximately one second.
+- Glass strike: use a triangle fundamental at gain 0.08 and a quieter inharmonic sine partial at 2.32 times its pitch, ending the partial about halfway through the fundamental's 0.9s decay.
 - bed or music: `k.bed(0, DURATION, {kind: 'room', gain: 0.2})` and `k.music(0, DURATION, {mood: 'dreamy', bpm: 96, key: 'D', gain: 0.25})`.
 
 ## Signature moves

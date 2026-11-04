@@ -37,7 +37,7 @@ No colour at all. If a second ink is needed, use dot density, not hue.
 ## Mark-making
 **Brush stroke `brush(pts, w, profile)`**: offset the polyline left and right by `w * profile(u) / 2 + 0.4px` and fill the polygon. Default profile `sin(pi*u)^0.55` (tapered both ends); flicks use `1 - u`; lashes and hair use `0.45 + 0.55*sin(pi*u)`. Weights 3 to 15px.
 
-**Closed ink loop `inkLoop(pts, w)`**: for each point compute the outward normal and `lit = clamp(nx*0.55 + ny*0.83, -1, 1)`. Outer offset `w * (0.62 + 0.38*lit) / 2 + 0.45`, inner offset 0.85 of that; jitter each point +/-1.2px with a rng reseeded at 8 fps (the line "boils"). Fill outer ring minus inner ring with `evenodd`. The line is thick on the lower-right (shadow side) and thin on the upper-left. Weights: body outline 12px, features 6 to 9px.
+**Closed ink loop:** resample the silhouette and calculate its outward normals. Dot each normal against a fixed upper-left light direction to vary outline thickness: use around 12px for the body and 6-9px for details. Fill the region between an outer and inner displaced path with evenodd. Add a small fixed-seed wobble changing on an 8fps grid, keeping the brightest side thinner than the shadow side.
 
 **Solid shadow**: fill the silhouette white, clip to it, then fill the same shape black shifted 10px down; the white rim left on top is the rim light. Hard drop shadows for UI shapes: a black copy offset 9px right and 12px down under a white shell.
 
@@ -45,7 +45,7 @@ No colour at all. If a second ink is needed, use dot density, not hue.
 
 **Focus lines**: 160 to 230 slivers. Each: random angle, inner radius `r0 * (1 to 1.6)`, outer `r1`, base width 0.6 to 6.5px (15% double width), a thin triangle. Fill black as one path. Reseed from `floor(t*8)` so they flicker. Always paint a white disc over the middle first (radius about 1.05 of `r0`) so the subject stays clean. Variants: speed lines (tapered parallel slivers 120 to 390px long, 1 to 4px wide) and shock lines (vertical slivers 60 to 156px long from the top edge, width 2.7 to 5.4px).
 
-**SFX lettering**: render each sound word three times at the same spot: black stroke at `lineWidth = 2 * (outline + 3)`, white stroke at `2 * outline`, then the black fill. `outline` 11 to 15px. Font Dela Gothic One (katakana) at 105 to 140px, skewed -0.2 to -0.25 (`ctx.transform(1, 0, skew, 1, 0, 0)`), each glyph rotated -0.2 to +0.15 rad and stepped diagonally (down 138px per letter for a rumble). For Latin sound words use Archivo Black. Tremble: offset +/-3.3px by `sin(t*50)`, `cos(t*47)`.
+**SFX lettering:** build each sound word as a black outer contour, a narrower white separator and a black fill. Use 11-15px outline spacing with Dela Gothic One for suitable Japanese lettering or Archivo Black for Latin words, at 105-140px. Apply a horizontal shear around -0.22 through the canvas transform matrix, rotate individual glyphs slightly and offset them along a diagonal. A tremble of at most 3px may last 0.2s, then stop for reading.
 
 **Face of a mascot (optional)**: three primitives. Happy = two brush arcs for eyes and a half-moon mouth; shock = two white ovals (33 x 39px) with tiny pupils and a small round mouth; think = two solid ovals plus a flat dash. A white glare polygon on the screen/eye adds shine.
 
@@ -84,11 +84,11 @@ No colour at all. If a second ink is needed, use dot density, not hue.
 
 ## Sound palette
 Each SFX word is also a sound. Everything lands on the next 12 fps frame after its time.
-- element appears (panel slam): `k.play('slap', t, { gain: 0.45 })` plus `k.play('thud', t, { f: 120, gain: 0.4 })`; balloons and captions `k.play('pop', t, { f: 280, gain: 0.5 })`.
+- element appears (panel): a slap at gain 0.4 over a low 125Hz thud at gain 0.35. Balloons use a lighter 285Hz pop at gain 0.4.
 - label lands: `k.play('pop', t, { f: 340, gain: 0.35 })`, in `k.minor`.
 - arrow completes: pink noise swell, `k.noise(t,{color:'pink',filter:'bandpass',f:900,q:0.8,dur:0.25,gain:0.16,a:0.08})`.
 - drawing / writing: not used; the page does not scribble. Counters use ticks instead (below).
-- scene change (page turn): `k.play('paper', t, { dur: 0.18, gain: 0.45 })`, a pink bandpass swish from t+0.08 (dur 0.36, gain 0.3, a 0.16), `k.play('paper', t + 0.42, { dur: 0.1, gain: 0.3 })`.
+- scene change: a short paper flick starts the page turn, a soft pink-noise sweep follows the moving fold, then a quieter paper contact marks the landing around 0.4s later. Match both contacts to the same fold times used by the picture.
 - wrong / right: wrong = `k.play('impact', t, { gain: 0.95 })` then `k.play('buzz', t + 0.2, { f: 98, dur: 0.55, gain: 1 })`. Right = a two-note chime: `E5` then `C5` 0.2 s later, triangle tones, dur 0.5 and 0.9, gain 0.22, each doubled one octave up at gain 0.04.
 - sound words: rumble (one hit per glyph, 0.12 s apart): `k.tone(t,{f:90,glideTo:48,dur:0.3,gain:0.26})` plus `k.noise(t,{color:'brown',filter:'lowpass',f:380,dur:0.22,gain:0.28})`; ratchet = `k.play('click', t, { f: 1000 or 1160, gain: 0.7 })` per frame; surge = bandpass noise swell plus a rising triangle tone over the draw time.
 - key number: `k.play('impact', t, { gain: 1.25 })` plus `k.play('stamp', t, { gain: 0.5 })`. Counter ticks before it: `k.noise(t,{filter:'bandpass',f:2000,q:1.4,dur:0.03,gain:0.3})` per redraw, thinning at both ends.

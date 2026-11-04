@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Copy check: find long word runs shared between a candidate text and a source text.
 
-Used to prove a rewritten prompt or style card is original wording, not a paste.
+A wording-overlap screen for rewritten prompts and style cards.
+Passing this check does not establish originality, permission or legal clearance.
 Both texts are lowercased and reduced to word tokens (letters, digits, apostrophes).
 Any run of --min (default 8) consecutive tokens that appears in both fails the check.
 
