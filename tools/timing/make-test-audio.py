@@ -40,7 +40,7 @@ LYRICS = ["Every signal finds its way home", "Count the beats and hold the line"
           "Seven lights across the water", "Nothing moves until the drop"]
 LYRIC_BARS = [9, 11, 13, 15]          # 0-based bar index where each line is placed
 ADLIB, ADLIB_BAR = "Hey hey hey", 17
-TAGS = [("[Intro]", 0), ("[Chorus]", 8), ("[Outro]", 16)]
+TAGS = [("[Intro]", 0), ("[Chorus]", 8), ("[Outro]", 18)]
 SCRIPT = ("Every frame is a pure function of time. The page draws any moment on request. "
           "Fast. That keeps renders repeatable.\n\n"
           "The renderer captures 30 fps. Sound is scheduled at the same times as the picture. "
@@ -86,8 +86,8 @@ def main() -> int:
     a = ap.parse_args()
     import numpy as np
     need("ffmpeg", "say")
-    if a.bars < 18:
-        raise ToolError("--bars must be at least 18 (lyrics and ad-lib sit in bars 10-18)")
+    if a.bars < 20:
+        raise ToolError("--bars must be at least 20 (lyrics, ad-lib and outro tag sit in bars 10-19)")
     out = a.outdir
     guard_outputs([out / n for n in OUTS], a.force)
     out.mkdir(parents=True, exist_ok=True)
@@ -152,7 +152,7 @@ def main() -> int:
 
         cues = [(beats[bar * 4], beats[bar * 4] + 0.5, tag) for tag, bar in TAGS]
         for k, ln in enumerate(placed):
-            end = ln["end"] + 0.3 if k < len(placed) - 1 else dur - 0.2   # last cue runs away
+            end = ln["end"] + 0.3 if k < len(placed) - 1 else beats[TAGS[-1][1] * 4]   # last cue runs to the outro tag
             cues.append((ln["start"] + 0.08, end, ln["text"]))
         cues.sort()
         srt = "".join(f"{i}\n{srt_time(s)} --> {srt_time(e)}\n{t}\n\n" for i, (s, e, t) in enumerate(cues, 1))

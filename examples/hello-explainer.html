@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Hello explainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@500;800&display=block" rel="stylesheet">
+<style>html,body{margin:0;background:#111}canvas{display:block}</style>
+</head><body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script src="../lib/harness.js"></script>
+<script src="../lib/sound.js"></script>
+<script>
+// A 12-second explainer. Every frame is a pure function of t; picture and sound read the same timeline T.
+const W = 1920, HGT = 1080, ctx = document.getElementById('c').getContext('2d');
+window.DURATION = 12;
+window.FPS = 30;
+
+const INK = '#1f1d1a', ACCENT = '#d9472b', BLUE = '#2e5f9e';
+const SANS = (px, wt = 800) => `${wt} ${px}px Inter, "Helvetica Neue", Arial, sans-serif`;
+const HAND = (px) => `700 ${px}px Caveat, "Marker Felt", cursive`;
+const NZ = H.noise('hello-explainer');
+const E = H.ease, P = H.prog;
+
+// ---------- timeline (seconds) ----------
+const T = {
+  head: [0.3, 1.6],    // headline types on
+  clock: [0.9, 1.6],   // clock circle draws on
+  frame: 1.5,          // picture frame pops in
+  arrow: [2.0, 3.0],   // arrow draws on
+  label: [3.05, 3.6],  // "draw(t)" types on
+  count: [3.9, 5.6],   // counter runs 0 -> 360
+  emph: 5.7,           // counter pops, underline draws
+  wipe: [6.5, 7.1],    // scene change: second sheet slides in
+  take: [7.3, 8.3],    // takeaway types on
+  sub: 8.6,            // sub-line rises in
+  check: [9.0, 9.45],  // check mark draws on
+  strip: 9.8,          // five mini frames pop in, 0.18 s apart
+};
+const HEADLINE = 'A video frame is a drawing of one moment.';
+const TAKEAWAY = 'Same t in, same picture out.';
+const SUBLINE = 'So frames can be drawn in any order, on any machine.';
+const STRIP = [7.2, 0.4, 11.0, 3.6, 5.8];
+
+// ---------- static geometry (built once) ----------
+function ring(cx, cy, r, seed, amp) {
+  const pts = [];
+  for (let i = 0; i <= 80; i++) { const a = -Math.PI / 2 + 0.25 + (i / 80) * Math.PI * 2.06; pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
+  return H.wobble(pts, NZ, { amp, freq: 0.01, seed });
+}
+const CLOCK = { x: 470, y: 590, r: 150 };
+const FRAME = { x: 1450, y: 590, w: 400, h: 290 };
+const clockRing = ring(CLOCK.x, CLOCK.y, CLOCK.r, 1, 3);
+const arrowPts = H.wobble(H.resample(H.bezier([660, 560], [830, 420], [1040, 420], [1210, 545]), 6), NZ, { amp: 3, freq: 0.012, seed: 3 });
+const checkPts = H.wobble(H.resample([[0, 0], [28, 32], [86, -46]], 4), NZ, { amp: 1.5, freq: 0.05, seed: 5 });
+let underline = [], paperA, paperB;
+
+// ---------- drawing helpers ----------
+function ink(color, width) { ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
+function handAngle(t) { return -Math.PI / 2 + (Math.PI * 2 * t) / 6; }
+
+function clockFace(cx, cy, r, at, u, lw, pts) {
+  ink(INK, lw);
+  H.strokePath(ctx, H.partial(pts || ring(cx, cy, r, 9, r / 60), u)); ctx.stroke();
+  const k = P(u, 0.85, 1);
+  if (k <= 0) return;
+  ctx.globalAlpha = k;
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2, r0 = r * (i % 3 ? 0.84 : 0.76);
+    ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); ctx.lineTo(cx + Math.cos(a) * r * 0.9, cy + Math.sin(a) * r * 0.9); ctx.stroke();
+  }
+  const a = handAngle(at);
+  ink(ACCENT, lw * 1.1);
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * r * 0.7, cy + Math.sin(a) * r * 0.7); ctx.stroke();
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(cx, cy, lw * 1.2, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+// A picture frame holding a small clock that shows the moment `at`.
+function pictureFrame(cx, cy, w, h, at, scale, lw) {
+  if (scale <= 0) return;
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(scale, scale);
+  ctx.fillStyle = 'rgba(0,0,0,0.10)'; ctx.beginPath(); ctx.roundRect(-w / 2 + 8, -h / 2 + 10, w, h, 14); ctx.fill();
+  ctx.fillStyle = '#fffaf0'; ctx.beginPath(); ctx.roundRect(-w / 2, -h / 2, w, h, 14); ctx.fill();
+  ink(INK, lw); ctx.stroke();
+  ink('rgba(31,29,26,0.35)', lw * 0.6);
+  ctx.beginPath(); ctx.moveTo(-w / 2 + 24, h * 0.3); ctx.lineTo(w / 2 - 24, h * 0.3); ctx.stroke();
+  clockFace(0, -h * 0.06, h * 0.28, at, 1, lw * 0.8, null);
+  ctx.restore();
+}
+
+function centerText(text, x, y, font, color, alpha = 1) {
+  ctx.font = font; ctx.fillStyle = color; ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(text, x, y); ctx.globalAlpha = 1; ctx.textAlign = 'left';
+}
+
+// ---------- scene A: what a frame is ----------
+function sceneA(t) {
+  ctx.drawImage(paperA, 0, 0);
+
+  // Headline, typed on, with a caret while typing.
+  const hu = P(t, ...T.head), shown = H.typeOn(HEADLINE, hu);
+  ctx.font = SANS(76); ctx.fillStyle = INK; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(shown, 160, 200);
+  if (hu > 0 && hu < 1) { const x = 160 + ctx.measureText(shown).width + 8; ctx.fillRect(x, 140, 6, 72); }
+
+  // Clock: drawn on, then its hand turns with t.
+  const cu = E.inOutSine(P(t, ...T.clock));
+  if (cu > 0) {
+    clockFace(CLOCK.x, CLOCK.y, CLOCK.r, t, cu, 7, clockRing);
+    centerText(`t = ${t.toFixed(1)} s`, CLOCK.x, CLOCK.y + CLOCK.r + 90, HAND(64), INK, P(t, T.clock[1] - 0.2, T.clock[1] + 0.2));
+  }
+
+  // Picture frame pops in and mirrors the clock.
+  const fs = E.outBack(P(t, T.frame, T.frame + 0.35));
+  pictureFrame(FRAME.x, FRAME.y, FRAME.w, FRAME.h, t, fs, 7);
+  if (fs > 0) centerText('frame', FRAME.x, FRAME.y + FRAME.h / 2 + 80, HAND(64), INK, P(t, T.frame + 0.2, T.frame + 0.5));
+
+  // Hand-drawn arrow, drawn on by length; the head lands when the line arrives.
+  const au = E.inOutCubic(P(t, ...T.arrow));
+  if (au > 0) {
+    ink(ACCENT, 9);
+    H.strokePath(ctx, H.partial(arrowPts, au)); ctx.stroke();
+    const hk = E.outBack(P(t, T.arrow[1] - 0.04, T.arrow[1] + 0.16));
+    if (hk > 0) {
+      const n = arrowPts.length, [x1, y1] = arrowPts[n - 1], [x0, y0] = arrowPts[n - 6], a = Math.atan2(y1 - y0, x1 - x0);
+      for (const s of [-1, 1]) {
+        const b = a + Math.PI + s * 0.5;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 + Math.cos(b) * 40 * hk, y1 + Math.sin(b) * 40 * hk); ctx.stroke();
+      }
+    }
+  }
+  centerText(H.typeOn('draw(t)', P(t, ...T.label)), 935, 395, HAND(80), ACCENT);
+
+  // Counter: 0 -> 360, then an emphasis pop with a small shake and an underline.
+  const ca = P(t, T.count[0] - 0.3, T.count[0]);
+  if (ca > 0) {
+    const value = Math.round(360 * E.outQuad(P(t, ...T.count)));
+    ctx.globalAlpha = ca; ctx.font = SANS(44, 500); ctx.fillStyle = INK; ctx.textAlign = 'right';
+    ctx.fillText('frames in 12 seconds at 30 fps:', 1090, 965); ctx.textAlign = 'left';
+    const pop = E.outBack(P(t, T.emph, T.emph + 0.25)) * 0.32 - E.inOutSine(P(t, T.emph + 0.25, T.emph + 0.6)) * 0.17;
+    const [sx, sy] = H.shake(t, 7, 7 * (1 - P(t, T.emph, T.emph + 0.45)) * (t >= T.emph ? 1 : 0));
+    ctx.save(); ctx.translate(1125 + 95 + sx, 935 + sy); ctx.scale(1 + pop, 1 + pop);
+    ctx.font = SANS(110); ctx.fillStyle = H.rgba(H.mixRGB(INK, ACCENT, P(t, T.emph, T.emph + 0.15))); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(value), 0, 0);
+    ctx.restore(); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.globalAlpha = 1;
+    const uu = E.outCubic(P(t, T.emph + 0.05, T.emph + 0.4));
+    if (uu > 0) { ink(ACCENT, 9); H.strokePath(ctx, H.partial(underline, uu)); ctx.stroke(); }
+  }
+}
+
+// ---------- scene B: the takeaway ----------
+function sceneB(t) {
+  ctx.drawImage(paperB, 0, 0);
+  centerText('the takeaway', W / 2, 300, HAND(60), BLUE, P(t, T.take[0] - 0.3, T.take[0]));
+
+  const px = H.fitFont(ctx, TAKEAWAY, 1400, (s) => SANS(s), 120, 40);
+  ctx.font = SANS(px);
+  const full = ctx.measureText(TAKEAWAY).width, left = W / 2 - full / 2;
+  ctx.fillStyle = INK; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(H.typeOn(TAKEAWAY, P(t, ...T.take)), left, 480);
+
+  const ck = E.outCubic(P(t, ...T.check));
+  if (ck > 0) {
+    ctx.save(); ctx.translate(left - 140, 445); ink(ACCENT, 13);
+    H.strokePath(ctx, H.partial(checkPts, ck)); ctx.stroke(); ctx.restore();
+  }
+
+  const su = E.outCubic(P(t, T.sub, T.sub + 0.45));
+  if (su > 0) centerText(SUBLINE, W / 2, 590 + 24 * (1 - su), SANS(46, 500), INK, su);
+
+  STRIP.forEach((at, i) => {
+    const s = E.outBack(P(t, T.strip + i * 0.18, T.strip + i * 0.18 + 0.3));
+    const cx = W / 2 + (i - 2) * 290;
+    pictureFrame(cx, 800, 230, 160, at, s, 4);
+    if (s > 0) centerText(`t = ${at.toFixed(1)}`, cx, 930, HAND(48), INK, H.clamp(s, 0, 1));
+  });
+}
+
+// ---------- the frame ----------
+window.__renderFrame = (t) => {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  const w = E.inOutCubic(P(t, ...T.wipe));
+  if (w < 1) { ctx.save(); ctx.translate(-260 * w, 0); sceneA(t); ctx.restore(); }
+  if (w > 0) {
+    const x = W * (1 - w);
+    const g = ctx.createLinearGradient(x - 70, 0, x, 0);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.22)');
+    ctx.fillStyle = g; ctx.fillRect(x - 70, 0, 70, HGT);
+    ctx.save(); ctx.translate(x, 0); sceneB(t); ctx.restore();
+  }
+  H.vignette(ctx, { strength: 0.32, inner: 0.5 });
+  H.grain(ctx, t, { strength: 0.05, cell: 2, seed: 4, fps: window.FPS });
+};
+
+// ---------- sound, on the same timeline ----------
+window.scoreSound = (k) => {
+  k.bed(0, 12, { kind: 'room', gain: 0.08 });
+  k.music(0, 12, { mood: 'calm', bpm: 96, key: 'C', gain: 0.22 });
+  k.play('typing', T.head[0], { dur: T.head[1] - T.head[0], gain: 0.6, minor: true });
+  k.play('pencil', T.clock[0], { dur: T.clock[1] - T.clock[0], gain: 0.5, minor: true });
+  k.play('pop', T.frame, { gain: 0.8 });
+  k.play('stroke', T.arrow[0], { dur: T.arrow[1] - T.arrow[0], gain: 0.8 });
+  k.play('tock', T.arrow[1], { gain: 0.7 });
+  k.play('typing', T.label[0], { dur: T.label[1] - T.label[0], gain: 0.5, minor: true });
+  for (let i = 0; T.count[0] + i * 0.1 < T.count[1] - 1e-6; i++) {   // 10 ticks per second
+    k.play('tick', T.count[0] + i * 0.1, { gain: 0.45, f: 3000 + i * 40, minor: true });
+  }
+  k.play('stamp', T.emph, { gain: 0.9 });
+  k.play('pencil', T.emph + 0.05, { dur: 0.35, gain: 0.5, minor: true });
+  k.play('whoosh', T.wipe[0] - 0.1, { dur: 0.7, gain: 0.9 });
+  k.play('paper', T.wipe[0] + 0.15, { dur: 0.45, gain: 0.6, minor: true });
+  k.play('typing', T.take[0], { dur: T.take[1] - T.take[0], gain: 0.6, minor: true });
+  k.play('stroke', T.check[0], { dur: T.check[1] - T.check[0], gain: 0.7 });
+  k.play('success', T.check[1], { gain: 0.7 });
+  STRIP.forEach((_, i) => k.play('pop', T.strip + i * 0.18, { gain: 0.5, f: 420 + i * 60, minor: true }));
+};
+
+// ---------- ready: fonts, textures, font-dependent geometry ----------
+window.__ready = H.loadFonts([SANS(76), SANS(46, 500), HAND(64)]).then(() => {
+  paperA = H.paperTexture(W, HGT, { seed: 1, tone: '#f3ecdf', fiber: 0.5, grain: 0.5, blotch: 0.35 });
+  paperB = H.paperTexture(W, HGT, { seed: 2, tone: '#e6ecee', fiber: 0.4, grain: 0.5, blotch: 0.3 });
+  ctx.font = SANS(110);
+  const half = ctx.measureText('360').width * 1.15 / 2 + 10, cx = 1125 + 95;
+  underline = H.wobble(H.resample([[cx - half, 1012], [cx + half, 1004]], 6), NZ, { amp: 2.5, freq: 0.02, seed: 8 });
+  return true;
+});
+</script>
+<script src="../lib/player.js"></script>
+</body></html>
