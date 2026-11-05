@@ -7,7 +7,7 @@
     "vbc": "bin/vbc.mjs"
   },
   "scripts": {
-    "test": "node --test tests/contracts.test.mjs",
+    "test": "node --test tests/contracts.test.mjs tests/stage-host.test.mjs",
     "vbc": "node bin/vbc.mjs"
   },
   "engines": {
