@@ -1,0 +1,958 @@
+{
+  "schemaVersion": 1,
+  "scopeFrozen": false,
+  "unresolvedSources": [
+    "spoken templates/short-form overlaps: compare identities before deduplication",
+    "doodle ink and seven music worlds: create own cards and source IDs",
+    "animated-host candidates: establish exact inventory from written specs",
+    "editing grammar motion preset: create own card"
+  ],
+  "entries": [
+    {
+      "id": "art-deco",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/art-deco.md"
+      ],
+      "dedupeGroup": "art-deco",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "ascii-render",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/ascii-render.md"
+      ],
+      "dedupeGroup": "ascii-render",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "ballpoint-notebook",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/ballpoint-notebook.md"
+      ],
+      "dedupeGroup": "ballpoint-notebook",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "bauhaus",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/bauhaus.md"
+      ],
+      "dedupeGroup": "bauhaus",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "blueprint",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/blueprint.md"
+      ],
+      "dedupeGroup": "blueprint",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "botanical-plate",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/botanical-plate.md"
+      ],
+      "dedupeGroup": "botanical-plate",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "chalkboard",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/chalkboard.md"
+      ],
+      "dedupeGroup": "chalkboard",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "claymation",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/claymation.md"
+      ],
+      "dedupeGroup": "claymation",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "collage-zine",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/collage-zine.md"
+      ],
+      "dedupeGroup": "collage-zine",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "constructivist",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/constructivist.md"
+      ],
+      "dedupeGroup": "constructivist",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "cosmic",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/cosmic.md"
+      ],
+      "dedupeGroup": "cosmic",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "cross-stitch",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/cross-stitch.md"
+      ],
+      "dedupeGroup": "cross-stitch",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "crt-terminal",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/crt-terminal.md"
+      ],
+      "dedupeGroup": "crt-terminal",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "cut-paper",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/cut-paper.md"
+      ],
+      "dedupeGroup": "cut-paper",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "deep-sea",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/deep-sea.md"
+      ],
+      "dedupeGroup": "deep-sea",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "editorial-chart",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/editorial-chart.md"
+      ],
+      "dedupeGroup": "editorial-chart",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "editorial-collage",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/editorial-collage.md"
+      ],
+      "dedupeGroup": "editorial-collage",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "etch-sketch",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/etch-sketch.md"
+      ],
+      "dedupeGroup": "etch-sketch",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "felt-quilt",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/felt-quilt.md"
+      ],
+      "dedupeGroup": "felt-quilt",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "film-noir",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/film-noir.md"
+      ],
+      "dedupeGroup": "film-noir",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "flat-space",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/flat-space.md"
+      ],
+      "dedupeGroup": "flat-space",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "flow-field",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/flow-field.md"
+      ],
+      "dedupeGroup": "flow-field",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "gameboy",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/gameboy.md"
+      ],
+      "dedupeGroup": "gameboy",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "glassmorphism",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/glassmorphism.md"
+      ],
+      "dedupeGroup": "glassmorphism",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "gouache-poster",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/gouache-poster.md"
+      ],
+      "dedupeGroup": "gouache-poster",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "halftone-pop",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/halftone-pop.md"
+      ],
+      "dedupeGroup": "halftone-pop",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "holographic-foil",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/holographic-foil.md"
+      ],
+      "dedupeGroup": "holographic-foil",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "illuminated",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/illuminated.md"
+      ],
+      "dedupeGroup": "illuminated",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "impasto-oil",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/impasto-oil.md"
+      ],
+      "dedupeGroup": "impasto-oil",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "isometric",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/isometric.md"
+      ],
+      "dedupeGroup": "isometric",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "isotype",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/isotype.md"
+      ],
+      "dedupeGroup": "isotype",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "kawaii",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/kawaii.md"
+      ],
+      "dedupeGroup": "kawaii",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "kinetic-type",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/kinetic-type.md"
+      ],
+      "dedupeGroup": "kinetic-type",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "letterpress",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/letterpress.md"
+      ],
+      "dedupeGroup": "letterpress",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "light-painting",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/light-painting.md"
+      ],
+      "dedupeGroup": "light-painting",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "linocut",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/linocut.md"
+      ],
+      "dedupeGroup": "linocut",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "low-poly",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/low-poly.md"
+      ],
+      "dedupeGroup": "low-poly",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "mac-1bit",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/mac-1bit.md"
+      ],
+      "dedupeGroup": "mac-1bit",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "manga-panel",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/manga-panel.md"
+      ],
+      "dedupeGroup": "manga-panel",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "math-anim",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/math-anim.md"
+      ],
+      "dedupeGroup": "math-anim",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "memphis",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/memphis.md"
+      ],
+      "dedupeGroup": "memphis",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "mosaic",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/mosaic.md"
+      ],
+      "dedupeGroup": "mosaic",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "ms-paint",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/ms-paint.md"
+      ],
+      "dedupeGroup": "ms-paint",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "napkin-sketch",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/napkin-sketch.md"
+      ],
+      "dedupeGroup": "napkin-sketch",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "neon-sign",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/neon-sign.md"
+      ],
+      "dedupeGroup": "neon-sign",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "newsprint",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/newsprint.md"
+      ],
+      "dedupeGroup": "newsprint",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "op-art",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/op-art.md"
+      ],
+      "dedupeGroup": "op-art",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "origami",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/origami.md"
+      ],
+      "dedupeGroup": "origami",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "oscilloscope",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/oscilloscope.md"
+      ],
+      "dedupeGroup": "oscilloscope",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "paper-marbling",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/paper-marbling.md"
+      ],
+      "dedupeGroup": "paper-marbling",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "papercraft",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/papercraft.md"
+      ],
+      "dedupeGroup": "papercraft",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "patent-drawing",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/patent-drawing.md"
+      ],
+      "dedupeGroup": "patent-drawing",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "pixel-16bit",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/pixel-16bit.md"
+      ],
+      "dedupeGroup": "pixel-16bit",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "pointillism",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/pointillism.md"
+      ],
+      "dedupeGroup": "pointillism",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "product-launch",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/product-launch.md"
+      ],
+      "dedupeGroup": "product-launch",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "psychedelic",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/psychedelic.md"
+      ],
+      "dedupeGroup": "psychedelic",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "ridgeline",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/ridgeline.md"
+      ],
+      "dedupeGroup": "ridgeline",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "risograph",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/risograph.md"
+      ],
+      "dedupeGroup": "risograph",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "screenprint-grid",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/screenprint-grid.md"
+      ],
+      "dedupeGroup": "screenprint-grid",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "shadow-puppet",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/shadow-puppet.md"
+      ],
+      "dedupeGroup": "shadow-puppet",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "sketchbook-pencil",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/sketchbook-pencil.md"
+      ],
+      "dedupeGroup": "sketchbook-pencil",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "soft-3d",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/soft-3d.md"
+      ],
+      "dedupeGroup": "soft-3d",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "spirograph",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/spirograph.md"
+      ],
+      "dedupeGroup": "spirograph",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "stained-glass",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/stained-glass.md"
+      ],
+      "dedupeGroup": "stained-glass",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "sticky-notes",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/sticky-notes.md"
+      ],
+      "dedupeGroup": "sticky-notes",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "string-art",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/string-art.md"
+      ],
+      "dedupeGroup": "string-art",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "sumi-e",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/sumi-e.md"
+      ],
+      "dedupeGroup": "sumi-e",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "swiss-grid",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/swiss-grid.md"
+      ],
+      "dedupeGroup": "swiss-grid",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "synthwave",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/synthwave.md"
+      ],
+      "dedupeGroup": "synthwave",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "tarot-card",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/tarot-card.md"
+      ],
+      "dedupeGroup": "tarot-card",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "tech-glow",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/tech-glow.md"
+      ],
+      "dedupeGroup": "tech-glow",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "teletext",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/teletext.md"
+      ],
+      "dedupeGroup": "teletext",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "thermal-camera",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/thermal-camera.md"
+      ],
+      "dedupeGroup": "thermal-camera",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "topographic",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/topographic.md"
+      ],
+      "dedupeGroup": "topographic",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "transit-map",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/transit-map.md"
+      ],
+      "dedupeGroup": "transit-map",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "truchet",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/truchet.md"
+      ],
+      "dedupeGroup": "truchet",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "ukiyo-e",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/ukiyo-e.md"
+      ],
+      "dedupeGroup": "ukiyo-e",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "vaporwave",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/vaporwave.md"
+      ],
+      "dedupeGroup": "vaporwave",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "vector-arcade",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/vector-arcade.md"
+      ],
+      "dedupeGroup": "vector-arcade",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "voxel",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/voxel.md"
+      ],
+      "dedupeGroup": "voxel",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "watercolor",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/watercolor.md"
+      ],
+      "dedupeGroup": "watercolor",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "whiteboard",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/whiteboard.md"
+      ],
+      "dedupeGroup": "whiteboard",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "win95",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/win95.md"
+      ],
+      "dedupeGroup": "win95",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "wireframe-terrain",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/wireframe-terrain.md"
+      ],
+      "dedupeGroup": "wireframe-terrain",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "x-ray",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/x-ray.md"
+      ],
+      "dedupeGroup": "x-ray",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    },
+    {
+      "id": "y2k-chrome",
+      "kind": "look",
+      "sources": [
+        "prompts/styles/y2k-chrome.md"
+      ],
+      "dedupeGroup": "y2k-chrome",
+      "launch": true,
+      "status": "spec",
+      "sourceClass": "rewritten-style-spec"
+    }
+  ]
+}

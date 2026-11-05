@@ -1,0 +1,356 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "inputsDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "format": {
+      "enum": [
+        "explainer",
+        "lyric",
+        "instrumental",
+        "vertical-short"
+      ]
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "height": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "fps": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "duration": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "look": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "resolved": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "fingerprint",
+        "resolved"
+      ]
+    },
+    "beats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "enum": [
+              "host",
+              "title",
+              "big",
+              "list",
+              "flow",
+              "screen",
+              "image",
+              "chart",
+              "code",
+              "quote",
+              "lyric",
+              "custom"
+            ]
+          },
+          "start": {
+            "type": "number",
+            "minimum": 0
+          },
+          "end": {
+            "type": "number",
+            "minimum": 0
+          },
+          "content": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "start",
+          "end",
+          "content"
+        ]
+      }
+    },
+    "words": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "spoken": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reading": {
+            "type": "string",
+            "minLength": 1
+          },
+          "start": {
+            "type": "number",
+            "minimum": 0
+          },
+          "end": {
+            "type": "number",
+            "minimum": 0
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "text",
+          "spoken",
+          "start",
+          "end",
+          "confidence"
+        ]
+      }
+    },
+    "mouth": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fps": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "shapes": {
+          "type": "string",
+          "pattern": "^[cmaoe]*$"
+        }
+      },
+      "required": [
+        "fps",
+        "shapes"
+      ]
+    },
+    "music": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "beats": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "downbeats": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "name",
+              "start"
+            ]
+          }
+        },
+        "features": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "asset": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "rate": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "asset",
+            "sha256",
+            "rate"
+          ]
+        }
+      },
+      "required": [
+        "beats",
+        "downbeats",
+        "sections"
+      ]
+    },
+    "captions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "start": {
+            "type": "number",
+            "minimum": 0
+          },
+          "end": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "text",
+          "start",
+          "end"
+        ]
+      }
+    },
+    "tracks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "narration",
+              "music",
+              "effects"
+            ]
+          },
+          "asset": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "offset": {
+            "type": "number",
+            "minimum": 0
+          },
+          "gain": {
+            "type": "number",
+            "minimum": 0
+          },
+          "language": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "asset",
+          "sha256",
+          "offset",
+          "gain",
+          "language"
+        ]
+      }
+    },
+    "score": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "time": {
+            "type": "number",
+            "minimum": 0
+          },
+          "options": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "time",
+          "options"
+        ]
+      }
+    },
+    "narrated": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "inputsDigest",
+    "format",
+    "width",
+    "height",
+    "fps",
+    "duration",
+    "look",
+    "beats",
+    "words",
+    "mouth",
+    "music",
+    "captions",
+    "tracks",
+    "score",
+    "narrated"
+  ]
+}

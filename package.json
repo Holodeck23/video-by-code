@@ -1,0 +1,16 @@
+{
+  "name": "video-by-code",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "vbc": "bin/vbc.mjs"
+  },
+  "scripts": {
+    "test": "node --test tests/contracts.test.mjs",
+    "vbc": "node bin/vbc.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

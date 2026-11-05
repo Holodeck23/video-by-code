@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "scopeFrozen": {
+      "type": "boolean"
+    },
+    "unresolvedSources": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "look",
+              "world",
+              "motion-preset"
+            ]
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "dedupeGroup": {
+            "type": "string",
+            "minLength": 1
+          },
+          "launch": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "spec",
+              "built",
+              "clip-passed",
+              "accepted"
+            ]
+          },
+          "approval": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "reviewer": {
+                "type": "string",
+                "minLength": 1
+              },
+              "date": {
+                "type": "string",
+                "minLength": 1
+              },
+              "fingerprint": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "aspect",
+                    "clip",
+                    "moving",
+                    "sound"
+                  ],
+                  "properties": {
+                    "aspect": {
+                      "enum": [
+                        "landscape",
+                        "vertical"
+                      ]
+                    },
+                    "clip": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "moving": {
+                      "const": true
+                    },
+                    "sound": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "reviewer",
+              "date",
+              "fingerprint",
+              "evidence"
+            ]
+          },
+          "sourceClass": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "sources",
+          "dedupeGroup",
+          "launch",
+          "status",
+          "sourceClass"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "scopeFrozen",
+    "unresolvedSources",
+    "entries"
+  ]
+}
