@@ -10,3 +10,4 @@ test('layer/host-geometric-bot plugin loads and registers draw hook', async () =
   const plugin = globalThis.VBC_PLUGINS?.['layer/host-geometric-bot'];
   assert.equal(typeof plugin?.draw, 'function');
 });
+

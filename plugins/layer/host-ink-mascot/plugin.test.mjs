@@ -10,3 +10,4 @@ test('layer/host-ink-mascot plugin loads and registers draw hook', async () => {
   const plugin = globalThis.VBC_PLUGINS?.['layer/host-ink-mascot'];
   assert.equal(typeof plugin?.draw, 'function');
 });
+

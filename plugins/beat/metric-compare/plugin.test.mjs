@@ -18,3 +18,4 @@ test('beat/metric-compare registers and renders valid text sizes', () => {
   assert.ok(plugin);
   assert.equal(typeof plugin.draw, 'function');
 });
+

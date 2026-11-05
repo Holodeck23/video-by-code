@@ -10,3 +10,4 @@ test('layer/host-cyber-bust plugin loads and registers draw hook', async () => {
   const plugin = globalThis.VBC_PLUGINS?.['layer/host-cyber-bust'];
   assert.equal(typeof plugin?.draw, 'function');
 });
+

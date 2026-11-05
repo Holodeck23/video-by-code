@@ -49,3 +49,4 @@
     module.exports = plugin;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : window);
+

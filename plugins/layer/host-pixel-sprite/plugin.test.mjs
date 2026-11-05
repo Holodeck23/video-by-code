@@ -10,3 +10,4 @@ test('layer/host-pixel-sprite plugin loads and registers draw hook', async () =>
   const plugin = globalThis.VBC_PLUGINS?.['layer/host-pixel-sprite'];
   assert.equal(typeof plugin?.draw, 'function');
 });
+

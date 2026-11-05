@@ -19,3 +19,4 @@ test('layer/halftone-dots registers and exposes draw()', () => {
   assert.ok(plugin);
   assert.equal(typeof plugin.draw, 'function');
 });
+
