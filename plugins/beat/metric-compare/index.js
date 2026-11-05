@@ -56,10 +56,21 @@
     ctx.fill();
 
     const ratio = clamp(Number(col.barRatio ?? 0.5), 0.08, 1);
-    const fillRatio = clamp(ratio * clamp(progress * 1.4, 0.25, 1), 0.08, 1);
+    const wave = Math.sin(progress * Math.PI * 6) * 0.03;
+    const fillRatio = clamp(ratio * clamp(progress * 1.4, 0.25, 1) + wave, 0.08, 1);
+    const fillW = Math.round(barW * fillRatio);
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.roundRect(barX, barY, Math.round(barW * fillRatio), barH, 10);
+    ctx.roundRect(barX, barY, fillW, barH, 10);
+    ctx.fill();
+
+    // Moving probe marker inside bar
+    const probeW = 44;
+    const probeSpan = Math.max(20, fillW - probeW - 12);
+    const probeX = barX + 6 + Math.round((progress * 960) % probeSpan);
+    ctx.fillStyle = palette.bg;
+    ctx.beginPath();
+    ctx.roundRect(probeX, barY + 5, probeW, barH - 10, 5);
     ctx.fill();
 
     const rows = Array.isArray(col.rows) ? col.rows : [];
@@ -69,6 +80,15 @@
       ctx.beginPath();
       ctx.roundRect(barX, ry, barW, 46, 8);
       ctx.fill();
+
+      const sweepX = barX + 8 + Math.round(((progress * 720 + i * 110) % Math.max(24, barW - 72)));
+      ctx.fillStyle = color;
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.beginPath();
+      ctx.roundRect(sweepX, ry + 4, 56, 38, 6);
+      ctx.fill();
+      ctx.restore();
 
       ctx.fillStyle = palette.text;
       ctx.font = '700 34px Arial, sans-serif';
