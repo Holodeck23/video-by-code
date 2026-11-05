@@ -38,27 +38,27 @@ node tests/runtime-contract.mjs
 Never animate to guessed timestamps. Measure the actual audio file first and record its SHA-256 hash:
 
 ```sh
-uv run tools/timing/audio-identity.py "$PROD/audio/source.wav" \
-  --out "$PROD/analysis/identity.json" --copy-wav "$PROD/analysis/analysis.wav"
+uv run tools/timing/audio-identity.py "$PROD/audio/source.wav" "$PROD/analysis"
 ```
 
 * **Spoken narration:**
-  * Synthesize via local Kokoro ONNX TTS (with `< 4` word fragment merge and `--say say.json` phonetic dictionary):
-    `uv run tools/timing/kokoro-narrate.py script.txt --out-dir "$PROD/audio" --voice af_heart --say say.json`
+  * Synthesize via local Kokoro ONNX TTS (`< 4` word fragment merge, `--say say.json` phonetic dictionary):
+    `~/.local/share/kokoro/.venv/bin/python tools/timing/kokoro-narrate.py script.txt "$PROD/audio/narration.wav" --voice af_heart --say say.json`
+    (or a structured beat `plan.json` + production dir: `kokoro-narrate.py plan.json "$PROD" --timing-js <film>/timing.js`)
   * Verify spoken audio round-trip via local `whisper-cli`:
-    `uv run tools/verify/verify-narration.py "$PROD/audio/narration.wav" "$PROD/audio/timing.json"`
+    `uv run tools/verify/verify-narration.py script.txt "$PROD/audio/narration.wav" --json "$PROD/checks/narration.json"`
   * Check scripts/lyrics for verbatim n-gram lift against reference text:
-    `python3 tools/verify/check-lift.py candidate.txt reference.txt`
+    `python3 tools/verify/check-lift.py reference.txt candidate.txt`
 * **Music / lyric / stem-reactive tracks:**
-  * Separate 6 stems via Demucs (`vocals, drums, bass, guitar, piano, other`) and normalize 44.1 kHz WAV:
-    `uv run --python 3.12 tools/timing/separate-stems.py "$PROD/audio/song.mp3" --out-dir "$PROD/analysis"`
+  * Normalize to 44.1 kHz WAV and separate stems via Demucs (`vocals, drums, bass, guitar, piano, other`):
+    `uv run --python 3.12 tools/timing/separate-stems.py "$PROD/audio/song.mp3" "$PROD" --slug song`
   * Extract 120 Hz stem envelopes, monotone musical time `tau`, beat/bar phase, silences, `features.f32`, and 100 fps guitar pitch/vibrato:
-    `uv run --python 3.12 tools/timing/analyze-stems.py "$PROD/analysis" --fps 120 --stem-pitch`
-  * Align word-level lyrics (`whisper-cli`, `mlx-whisper`, `faster-whisper`, or `acoustic` vocal-band energy warping):
-    `uv run tools/timing/align-words.py "$PROD/analysis/stems/vocals.wav" --script lyrics.txt --backend whisper-cli --out "$PROD/analysis/words.json"`
+    `uv run --python 3.12 tools/timing/analyze-stems.py "$PROD" --slug song --stem-pitch`
+  * Align word-level lyrics or narration (`whisper-cli`, `mlx-whisper`, `faster-whisper`, or `acoustic` vocal-band energy warping):
+    `uv run --python 3.12 tools/timing/align-words.py lyrics.txt "$PROD/analysis/stems/vocals.wav" "$PROD/analysis/words.json" --backend whisper-cli`
   * Lightweight single-file cues / beat grid / visualizer envelope:
-    * `uv run tools/timing/cue-extract.py "$PROD/audio/song.mp3" --out "$PROD/analysis/cues.json"`
-    * `uv run --python 3.12 tools/timing/beat-grid.py "$PROD/analysis/analysis.wav" --out "$PROD/analysis/beats.json"`
+    * `uv run tools/timing/embedded-lyrics.py "$PROD/audio/song.m4a" "$PROD/analysis/cues.json"` (line cues from an embedded subtitle stream)
+    * `uv run tools/timing/beat-grid.py "$PROD/analysis/analysis.wav" "$PROD/analysis/beats.json" --constant`
     * `python3 tools/build-visualizer.py "$PROD/analysis/analysis.wav" --out "$PROD/analysis/features.js"`
 * **Animated host (talking presenter):** after word alignment, build the mouth track, then write the storyboard as cue-word text ([`templates/storyboard.txt`](templates/storyboard.txt)) and gate each stage as in [`docs/13-animated-host-explainers.md`](docs/13-animated-host-explainers.md):
   `uv run tools/timing/mouth-track.py "$PROD/audio/voice.wav" "$PROD/analysis/words.json" "$PROD/analysis/mouth.json"`
