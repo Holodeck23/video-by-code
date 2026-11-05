@@ -1,5 +1,24 @@
 # Video by Code
 
+> **Refactor in progress.** We are rebuilding the toolkit around one film specification,
+> the `vbc` command and a live visual menu on the [`one-colour` branch](../../tree/one-colour).
+> The current documented workflow remains the baseline. The new engine and catalogue are
+> being built and reviewed; their presence on the branch does not mean they are ready for production.
+
+## Make it better for everyone
+
+My only request: if you use this kit and learn something useful or find a bug,
+please contribute it back so the next person benefits. A small fix, a reproducible
+bug report, a clearer example or a tested lesson all count. This is a request,
+not an additional condition on the MIT licence.
+
+Agents using this kit should help with that automatically: capture a useful finding,
+prepare a minimal fix or example, and run the relevant checks. When the user has
+authorized public contributions and the account is available, open a focused pull
+request or check for an existing issue before filing one. Otherwise leave a ready-to-submit
+draft and explain what it improves. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+
 A practical handbook and runnable toolkit for a human–agent team making explainers,
 lyric films, instrumentals, data stories and vertical shorts. The material concentrates
 on technique: direction, audio timing, deterministic scenes, rendering and review.

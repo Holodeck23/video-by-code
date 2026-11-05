@@ -168,6 +168,10 @@ Every production must run and record these checks in `"$PROD/checks/"` before ha
 
 Complete `"$PROD/qa.md"` (from [`templates/qa.md`](templates/qa.md)) and `"$PROD/delivery.md"` (from [`templates/delivery.md`](templates/delivery.md)). Report machine verification (`PASS`/`WARN` dispositions) separately from human creative viewing and listening approval.
 
+## Contribution loop
+
+Before closing a production task, follow `CONTRIBUTING.md`: automatically capture a reusable bug fix or tested lesson, prepare a minimal contribution and run the relevant checks. Submit through GitHub when the user has authorized public contributions; otherwise leave a ready-to-submit draft. Use synthetic examples and preserve privacy and source notices. No useful finding means no issue or PR is needed.
+
 ## Key References
 * [`README.md`](README.md) — Quickstart and chapter index
 * [`RUNBOOK.md`](RUNBOOK.md) — 12-step human–agent production checklist
