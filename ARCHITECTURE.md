@@ -38,6 +38,6 @@ Keep existing positive and negative browser/encode regressions during migration.
 
 ## Verification and next step
 
-Run `npm test`, `node bin/vbc.mjs validate manifest looks/manifest.json`, and `node bin/vbc.mjs --help`. Root CLI has no dependencies or global installation. The small schema evaluator supports only the declared keywords used here and rejects unknown keywords; it is not a general JSON Schema engine.
+Run `npm test`, `node bin/vbc.mjs validate bundle|cue|layer|renderer|manifest <file>`, and `node bin/vbc.mjs --help`. Root CLI has no dependencies or global installation. The small schema evaluator supports only the declared keywords used here (`schemas/{bundle,cue,layer,renderer,manifest}.schema.json`) and rejects unknown keywords; it is not a general JSON Schema engine.
 
 Next: stage lifecycle, minimum production CLI, resolver, three pilot looks and four host variants for David's pick. Human viewing/signoff precedes interface freeze and catalogue work. The existing Japanese/transcript-cache bugs are pilot acceptance work, not claimed fixed by these contracts.

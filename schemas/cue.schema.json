@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "cues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "anchor": {
+            "type": "string",
+            "pattern": "^@(?:bar\\s+[1-9][0-9]*|beat\\s+[1-9][0-9]*|section\\s+\\S+|\\s*\\S.*)$"
+          },
+          "type": {
+            "enum": [
+              "host",
+              "title",
+              "big",
+              "list",
+              "flow",
+              "screen",
+              "image",
+              "chart",
+              "code",
+              "quote",
+              "lyric",
+              "custom"
+            ]
+          },
+          "content": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "line",
+          "anchor",
+          "type",
+          "content"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "cues"
+  ]
+}

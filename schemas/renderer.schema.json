@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "mode": {
+      "enum": [
+        "tile",
+        "preview",
+        "export"
+      ]
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "height": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "fps": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "duration": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "from": {
+      "type": "number",
+      "minimum": 0
+    },
+    "to": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "audio": {
+      "enum": [
+        "none",
+        "page",
+        "bundle"
+      ]
+    },
+    "pinnedEnv": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "mode",
+    "width",
+    "height",
+    "fps",
+    "duration",
+    "from",
+    "to",
+    "audio"
+  ]
+}

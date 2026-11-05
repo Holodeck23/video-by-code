@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 import { readFile } from 'node:fs/promises';
-import { schemaFor,validate,bundleErrors } from '../lib/contracts.mjs';
+import { schemaFor,validate,bundleErrors,rendererErrors } from '../lib/contracts.mjs';
 const [command,kind,file,...extra]=process.argv.slice(2);
 try {
-  if(!command || ['help','--help','-h'].includes(command))console.log('vbc — video-by-code\n\nPhase 0:\n  vbc validate bundle|manifest|layer FILE\n  vbc look list\n\nPilot commands follow: new, make, voice, music, words, cues, stills, preview, render, check.');
+  if(!command || ['help','--help','-h'].includes(command))console.log('vbc — video-by-code\n\nPhase 0:\n  vbc validate bundle|cue|layer|renderer|manifest FILE\n  vbc look list\n\nPilot commands follow: new, make, voice, music, words, cues, stills, preview, render, check.');
   else if(command==='validate') {
-    if(!file || extra.length)throw new Error('usage: vbc validate bundle|manifest|layer FILE');
+    if(!file || extra.length)throw new Error('usage: vbc validate bundle|cue|layer|renderer|manifest FILE');
     const doc=JSON.parse(await readFile(file,'utf8')),errors=validate(await schemaFor(kind),doc);
     if(!errors.length && kind==='bundle')errors.push(...bundleErrors(doc));
+    if(!errors.length && kind==='renderer')errors.push(...rendererErrors(doc));
     if(errors.length)throw new Error(errors.join('\n'));
     console.log(`PASS: ${kind} structure${kind==='manifest'?' (not release approval)':''}`);
   } else if(command==='look' && kind==='list' && !file) {
