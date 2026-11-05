@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import '../lib/stage/host.js';
+import '../lib/stage/index.js';
+
+const {
   HOST_VARIANTS,
   MOUTH_SHAPES,
   computeContentRect,
@@ -8,12 +11,12 @@ import {
   isBlinking,
   resolveHostState,
   drawHost,
-} from '../lib/stage/host.js';
-import {
+} = globalThis.VBC_HOST;
+const {
   createStage,
   activeBeatAt,
   activeCaptionAt,
-} from '../lib/stage/index.js';
+} = globalThis.VBC_STAGE;
 
 function makeMockCanvas(width = 1920, height = 1080) {
   const ops = [];
@@ -118,7 +121,7 @@ test('host mouth sampler, seeded blinks, pose/side transitions and pixel dissolv
   assert.equal(midDissolveOut.side, 'left');
   assert.ok(midDissolveOut.dissolve < 1 && midDissolveOut.dissolve > 0);
 
-  const midDissolveIn = resolveHostState(beats, 4.26);
+  const midDissolveIn = resolveHostState(beats, 4.42);
   assert.equal(midDissolveIn.side, 'right');
   assert.ok(midDissolveIn.dissolve < 1 && midDissolveIn.dissolve > 0);
 });
