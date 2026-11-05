@@ -10,8 +10,8 @@ import '../lib/stage/host.js';
 import '../lib/stage/index.js';
 
 const {
-  HOST_VARIANTS,
   MOUTH_SHAPES,
+  registeredHosts,
   computeContentRect,
   sampleMouth,
   isBlinking,
@@ -167,10 +167,24 @@ test('host mouth sampler, seeded blinks, pose/side transitions and scale 35-45%'
   assert.ok(midDissolveIn.dissolve < 1 && midDissolveIn.dissolve > 0);
 });
 
-test('all 4 host plugins draw deterministically and have distinct silhouettes', () => {
-  assert.equal(HOST_VARIANTS.length, 4);
+test('all 4 host plugins come from registry and unknown host fails with registered list', () => {
+  assert.equal(globalThis.VBC_HOST.HOST_VARIANTS, undefined);
+  const hosts = registeredHosts();
+  assert.deepEqual(hosts, ['cyber-bust', 'geometric-bot', 'ink-mascot', 'pixel-sprite']);
+  const layout = computeContentRect(1920, 1080, 'left', true);
+  const listed = 'cyber-bust, geometric-bot, ink-mascot, pixel-sprite';
+
+  assert.throws(
+    () => drawHost(makeMockCanvas().getContext(), { variant: 'no-such-host', box: layout.hostBox }),
+    new RegExp(`unknown host "no-such-host" \\(registered hosts: ${listed}\\)`)
+  );
+  assert.throws(
+    () => drawHost(makeMockCanvas().getContext(), { box: layout.hostBox }),
+    new RegExp(`unknown host "\\(missing\\)" \\(registered hosts: ${listed}\\)`)
+  );
+
   const signatures = new Set();
-  for (const variant of HOST_VARIANTS) {
+  for (const variant of hosts) {
     const c1 = makeMockCanvas();
     const c2 = makeMockCanvas();
     const layout = computeContentRect(1920, 1080, 'left', true);

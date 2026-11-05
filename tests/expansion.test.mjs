@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
+  bundleErrors,
   migrate,
+  publishBundle,
   releaseErrors,
-   resolveLook,
   schemaFor,
   validate
 } from '../lib/contracts.mjs';
@@ -97,6 +98,65 @@ test('dynamic schemas accept plugin beat types and validate plugin beat schema',
   };
   const beatErrs = validateBundleExtensions(invalidBeatBundle, registry);
   assert.ok(beatErrs.some((e) => e.includes('barRatio')));
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vbc-pub-test-'));
+  try {
+    const outPath = path.join(tmpDir, 'bundle.json');
+    const fullBundle = {
+      schemaVersion: 1,
+      inputsDigest: 'a'.repeat(64),
+      format: 'explainer',
+      width: 1920,
+      height: 1080,
+      fps: 30,
+      duration: 5,
+      narrated: false,
+      look: {
+        id: 'pilot',
+        fingerprint: 'b'.repeat(64),
+        resolved: { palette: 'warm-editorial', host: 'ink-mascot' }
+      },
+      beats: [
+        {
+          id: 'mc1',
+          type: 'metric-compare',
+          start: 0,
+          end: 5,
+          content: {
+            title: 'TCP vs QUIC',
+            leftColumn: { name: 'TCP', metric: '240 ms', barRatio: 0.9 }
+          }
+        }
+      ],
+      words: [],
+      mouth: { fps: 12, shapes: 'cccc' },
+      music: { beats: [], downbeats: [], sections: [] },
+      captions: [],
+      tracks: [],
+      score: [],
+      ext: {}
+    };
+    assert.deepEqual(bundleErrors(fullBundle), []);
+    await publishBundle(outPath, fullBundle);
+    assert.ok(fs.existsSync(outPath));
+
+    const badTypeBundle = {
+      ...fullBundle,
+      beats: [
+        {
+          id: 'b1',
+          type: 'unregistered-beat-type',
+          start: 0,
+          end: 5,
+          content: { title: 'Nope' }
+        }
+      ]
+    };
+    assert.ok(bundleErrors(badTypeBundle).some((e) => e.includes('unregistered-beat-type')));
+    await assert.rejects(() => publishBundle(outPath, badTypeBundle), /unknown value/);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
 });
 
 test('scaffoldPlugin creates passing plugins and validates ext.<analyserId>', async () => {
