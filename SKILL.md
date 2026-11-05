@@ -60,6 +60,8 @@ uv run tools/timing/audio-identity.py "$PROD/audio/source.wav" \
     * `uv run tools/timing/cue-extract.py "$PROD/audio/song.mp3" --out "$PROD/analysis/cues.json"`
     * `uv run --python 3.12 tools/timing/beat-grid.py "$PROD/analysis/analysis.wav" --out "$PROD/analysis/beats.json"`
     * `python3 tools/build-visualizer.py "$PROD/analysis/analysis.wav" --out "$PROD/analysis/features.js"`
+* **Animated host (talking presenter):** after word alignment, build the mouth track, then write the storyboard as cue-word text ([`templates/storyboard.txt`](templates/storyboard.txt)) and gate each stage as in [`docs/13-animated-host-explainers.md`](docs/13-animated-host-explainers.md):
+  `uv run tools/timing/mouth-track.py "$PROD/audio/voice.wav" "$PROD/analysis/words.json" "$PROD/analysis/mouth.json"`
 
 ---
 

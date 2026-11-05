@@ -50,6 +50,7 @@ and the [12-second vertical short](docs/recipes/vertical-short.md).
 10. [Pitfalls](docs/10-pitfalls.md): concrete symptoms, causes and repairs.
 11. [Team playbook](docs/11-team-playbook.md): responsibilities, checkpoints and handoffs.
 12. [Advanced engines, shaders & benchmarks](docs/12-advanced-engines-and-benchmarks.md): stem separation, 120 Hz feature packing, lyric alignment, WebGL post-processing, multi-worker WebSocket capture, and luminance benchmarks.
+13. [Animated-host explainers](docs/13-animated-host-explainers.md): stage gates, cue-word storyboards, lip sync from the real take, swappable looks, and several languages on one timeline.
 
 ## Use the kit
 
@@ -63,6 +64,8 @@ and the [12-second vertical short](docs/recipes/vertical-short.md).
 | Build a prompt | `python3 tools/build-prompt.py whiteboard --brief explainer-voiceover` |
 | Exact graphics, sound, features, ink, WebGL & renderer contract | [lib/API.md](lib/API.md) |
 | Stem separation, 120 Hz stem analyzer, multi-backend word aligner & Kokoro TTS | `tools/timing/{separate-stems,analyze-stems,align-words,kokoro-narrate}.py` |
+| Mouth-shape track (lip sync) for a drawn host | `tools/timing/mouth-track.py` |
+| Cue-word storyboard template | [templates/storyboard.txt](templates/storyboard.txt) |
 | High-throughput WebSocket renderer, Pillow workbook renderer & batch imagegen | `tools/render/{parallel-ws-render.mjs,workbook-render.py,codex-imagegen.sh}` |
 | ASR round-trip & verbatim-lift verifiers | `tools/verify/{verify-narration,check-lift}.py` |
 | Lyric film | [recipe](docs/recipes/lyric-music-video.md) |

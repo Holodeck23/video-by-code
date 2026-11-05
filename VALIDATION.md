@@ -1,6 +1,6 @@
 # Validation scope — 2026-11-04
 
-The kit contains 11 tutorial chapters, four recipes, an agent/team runbook, production
+The kit contains 13 tutorial chapters, four recipes, an agent/team runbook, production
 templates, five prompt briefs and 86 style specifications. The chapters explain both
 human judgment and executable agent work. They do not imply every advanced engine or
 alignment pipeline discussed is supplied by this repository.
@@ -27,6 +27,7 @@ alignment pipeline discussed is supplied by this repository.
 | Licence | MIT for the kit; adapted MIT code listed with its original notice in `THIRD-PARTY-NOTICES.md` |
 | Craft rules | Shared `prompts/briefs/_craft-core.md` included in every assembled prompt; all briefs pass the 8-word overlap check against all 86 source exports, the core also at 6 words |
 | Narrated example | Rebuilt as one continuous film; determinism, layout (0 violations over 1080 frames) and the full recipe (14/14 verifier checks, -14.1 LUFS, -1.5 dBTP) pass; mean frame time 13.6 ms |
+| Mouth track | `say` fixture with 1 s lead silence: lead steps all closed, open/round/wide shapes during speech, 30 fps level curve; empty-words and overwrite cases refuse with exit 1 |
 | Channel SSIM tool | Rewritten with decode-order pairing and per-channel numpy SSIM: lossless 4:4:4 vs source PASS (>= 0.9994 all channels), 4:2:0 on fine saturated detail FAIL (R 0.82), an ffv1 source with a 1 ms time base pairs correctly |
 | Public-repo sweep | No personal paths, project/song titles, reference titles or private engine names in tracked files |
 

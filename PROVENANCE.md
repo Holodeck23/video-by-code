@@ -13,6 +13,7 @@ rather than project histories or private chats.
 | Saved extraction reports (2026-11-04) | Research input, including reported failures and acceptance limits |
 | Futurepedia Style Atlas 86 prompt exports | Visual-technique reference; rewritten style specifications and briefs |
 | External framework documentation | Linked primary sources in the relevant chapters; implementations are optional |
+| Nick Saraev's free Maker Zero anime-explainer skill pack (2026-11) | Method reference for chapter 13; techniques re-described in new wording, `mouth-track.py` written independently, 8-word overlap check passes against the pack's docs and code. No file from the pack is distributed |
 | New examples, templates and packaging | Original teaching and handoff material for this kit |
 
 The two extraction reports remain in the author's private research archive outside this

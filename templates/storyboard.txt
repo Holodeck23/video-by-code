@@ -1,0 +1,36 @@
+# Storyboard: one block per picture change. Lines starting with # are notes and are ignored.
+# Guide: docs/13-animated-host-explainers.md §4
+#
+# Block format
+#   == <type> key=value key="value with spaces"
+#   @ the spoken words where this beat begins (must appear in words.json)
+#   content lines, or "- item @ spoken words where the item appears"
+#
+# Types: host · title · big · list · flow · screen · image · custom
+# Keys on any beat: mood=<one of the host's eye sets, e.g. happy|think|wink>
+#                   host=corner|left|right|center|hidden   sfx=blip|pop|shimmer|whoosh|type|none
+# Beats under 1.2 s get a warning. A cue phrase that is not found stops the compile.
+
+== host mood=happy
+@ <first words of the video>
+
+== title label="Part 1"
+@ <words that open the first section>
+<Section title>
+<optional subtitle>
+
+== big
+@ <words where the statement lands>
+The one *idea* to remember
+
+== list title="<list heading>"
+@ <words that introduce the list>
+- <item one> @ <words that reveal item one>
+- <item two> @ <words that reveal item two>
+
+== screen file=<path/to/real-file> focus=12 title="<window title>"
+@ <words that bring the file on screen>
+- 20 @ <words that move the highlight to line 20>
+
+== custom name=<functionName> host=corner
+@ <words where the custom scene starts>
