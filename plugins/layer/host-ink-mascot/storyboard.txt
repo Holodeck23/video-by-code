@@ -1,0 +1,4 @@
+== list title="Ink Mascot Host"
+@ start
+- 8 fps 3-state hand-drawn line boil @ boil
+- Off-register wash and cross-hatching @ wash

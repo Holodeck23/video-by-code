@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["title"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "badge": { "type": "string" },
+    "kicker": { "type": "string" },
+    "side": { "type": "string", "enum": ["left", "right"] },
+    "mood": { "type": "string" },
+    "pose": { "type": "string" },
+    "leftColumn": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "metric": { "type": "string" },
+        "barRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "status": { "type": "string" },
+        "tone": { "type": "string", "enum": ["danger", "accent", "neutral"] },
+        "rows": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "rightColumn": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "metric": { "type": "string" },
+        "barRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "status": { "type": "string" },
+        "tone": { "type": "string", "enum": ["danger", "accent", "neutral"] },
+        "rows": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "footer": { "type": "string" }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "layer",
+  "id": "host-pixel-sprite",
+  "version": "1.0.0",
+  "lane": "launch",
+  "status": "built",
+  "slot": "host",
+  "requires": [],
+  "provides": [
+    "pixel-grid"
+  ],
+  "dependencies": [
+    "lib/stage/host.js"
+  ]
+}

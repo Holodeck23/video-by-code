@@ -36,8 +36,14 @@ Minimum `vbc new/make` belongs in the pilot. Mock providers cover deterministic 
 
 Keep existing positive and negative browser/encode regressions during migration. Replace old paths only after pilot replacements pass; the baseline stays recoverable in Git. Phase 5 exercises hosted Pages subpaths with normal browser policy: assets, click-to-sound, seek/loop and both aspects. Exact frame comparisons pin browser/fonts/rendering backend. Hash agreement is distinct from fidelity review.
 
+## Built for expansion (plugin registry)
+
+Every addable kind (`look`, `layer`, `beat`, `format`, `anchor`, `provider`, `analyser`, `finish`) is a self-contained folder under `plugins/<kind>/<id>/` with `plugin.json` (`schemas/plugin.schema.json`), implementation code (`index.js`), content schema (`schema.json`), demo storyboard (`storyboard.txt`), card (`README.md`) and unit test (`plugin.test.mjs`). Registry discovery (`lib/registry.mjs`) automatically extends schema enums (`bundle`, `cue`, `layer`, `renderer`) and validates `ext.<pluginId>` bundle namespaces against registered `analyser` plugin schemas.
+
+Capabilities (`requires`/`provides`) are validated against `schemas/capabilities.json` via `vbc lint`. Plugins with `"lane": "lab"` and `"launch": false` never block `releaseErrors()`. Scoped approval fingerprints (`scopedLookFingerprint`) cover only the engine and layer files a look uses, and `evaluateApprovalCarryOver` carries over approvals when re-rendered frames are pixel-identical in the pinned environment. `migrate(kind, doc, targetVersion)` upgrades older schema documents. `vbc add <kind> <id>` scaffolds a complete passing plugin folder.
+
 ## Verification and next step
 
-Run `npm test`, `node bin/vbc.mjs validate bundle|cue|layer|renderer|manifest <file>`, and `node bin/vbc.mjs --help`. Root CLI has no dependencies or global installation. The small schema evaluator supports only the declared keywords used here (`schemas/{bundle,cue,layer,renderer,manifest}.schema.json`) and rejects unknown keywords; it is not a general JSON Schema engine.
+Run `npm test`, `node bin/vbc.mjs lint`, `node bin/vbc.mjs plugin list`, `node bin/vbc.mjs add <kind> <id>`, `node bin/vbc.mjs validate bundle|cue|layer|renderer|manifest|plugin <file>`, and `node bin/vbc.mjs --help`. Root CLI has no dependencies or global installation. The small schema evaluator supports only the declared keywords used here (`schemas/{bundle,cue,layer,renderer,manifest,plugin}.schema.json`) and rejects unknown keywords; it is not a general JSON Schema engine.
 
 Next: stage lifecycle, minimum production CLI, resolver, three pilot looks and four host variants for David's pick. Human viewing/signoff precedes interface freeze and catalogue work. The existing Japanese/transcript-cache bugs are pilot acceptance work, not claimed fixed by these contracts.

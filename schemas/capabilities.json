@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "capabilities": {
+    "light-map": "Ground surface provides emissive bounce and specular reflection map",
+    "emissive": "Marks emit HDR-ready neon or luminous strokes",
+    "matte": "Diffuse non-reflective paper or flat ground surface",
+    "ink-boil": "Deterministic 8 fps 3-state hand-drawn line boil",
+    "pixel-grid": "Low-resolution integer pixel canvas upscaled nearest-neighbour",
+    "vector-rig": "Layered flat-vector articulated character geometry",
+    "holo-scanlines": "Wireframe projection with CRT scanlines and rising particles",
+    "host-framing": "Optional framing treatment around the presenter",
+    "halftone-pattern": "Deterministic angled halftone dot shading pass",
+    "audio-reactive": "Reads 120 Hz music feature curves or beat phase",
+    "hdr-bloom": "WebGL post-processing bloom and chromatic aberration"
+  }
+}

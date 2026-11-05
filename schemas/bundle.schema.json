@@ -333,6 +333,9 @@
     },
     "narrated": {
       "type": "boolean"
+    },
+    "ext": {
+      "type": "object"
     }
   },
   "required": [

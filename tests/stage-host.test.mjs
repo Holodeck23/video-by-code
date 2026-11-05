@@ -1,5 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import '../plugins/layer/host-pixel-sprite/index.js';
+import '../plugins/layer/host-geometric-bot/index.js';
+import '../plugins/layer/host-ink-mascot/index.js';
+import '../plugins/layer/host-cyber-bust/index.js';
+import '../plugins/beat/metric-compare/index.js';
+import '../plugins/layer/halftone-dots/index.js';
 import '../lib/stage/host.js';
 import '../lib/stage/index.js';
 
@@ -10,12 +16,12 @@ const {
   sampleMouth,
   isBlinking,
   resolveHostState,
-  drawHost,
+  drawHost
 } = globalThis.VBC_HOST;
 const {
   createStage,
   activeBeatAt,
-  activeCaptionAt,
+  activeCaptionAt
 } = globalThis.VBC_STAGE;
 
 function makeMockCanvas(width = 1920, height = 1080) {
@@ -28,8 +34,10 @@ function makeMockCanvas(width = 1920, height = 1080) {
     lineCap: 'butt',
     lineJoin: 'miter',
     globalAlpha: 1,
+    imageSmoothingEnabled: true,
     font: '16px sans-serif',
     textAlign: 'left',
+    textBaseline: 'alphabetic',
     save() {
       ops.push('save');
     },
@@ -40,21 +48,34 @@ function makeMockCanvas(width = 1920, height = 1080) {
     translate(x, y) {
       ops.push(`translate:${x.toFixed(1)},${y.toFixed(1)}`);
     },
+    scale(x, y) {
+      ops.push(`scale:${x.toFixed(2)},${y.toFixed(2)}`);
+    },
     rotate(a) {
       ops.push(`rotate:${a.toFixed(2)}`);
     },
     beginPath() {},
     closePath() {},
-    moveTo() {},
-    lineTo() {},
+    moveTo(x, y) {
+      ops.push(`move:${Math.round(x)},${Math.round(y)}`);
+    },
+    lineTo(x, y) {
+      ops.push(`line:${Math.round(x)},${Math.round(y)}`);
+    },
     quadraticCurveTo() {},
-    arc() {},
+    arc(x, y, r) {
+      ops.push(`arc:${Math.round(x)},${Math.round(y)},${Math.round(r)}`);
+    },
     ellipse() {},
     rect(x, y, w, h) {
-      ops.push(`rect:${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`);
+      ops.push(
+        `rect:${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`
+      );
     },
     roundRect(x, y, w, h) {
-      ops.push(`rrect:${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`);
+      ops.push(
+        `rrect:${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`
+      );
     },
     clip() {
       ops.push('clip');
@@ -66,10 +87,14 @@ function makeMockCanvas(width = 1920, height = 1080) {
       ops.push(`stroke:${this.strokeStyle}`);
     },
     fillRect(x, y, w, h) {
-      ops.push(`frect:${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`);
+      ops.push(
+        `frect:${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`
+      );
     },
     strokeRect(x, y, w, h) {
-      ops.push(`srect:${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`);
+      ops.push(
+        `srect:${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`
+      );
     },
     fillText(text, x, y) {
       ops.push(`text:${text}@${Math.round(x)},${Math.round(y)}`);
@@ -78,9 +103,9 @@ function makeMockCanvas(width = 1920, height = 1080) {
       return {
         width: String(str).length * 14,
         actualBoundingBoxAscent: 24,
-        actualBoundingBoxDescent: 6,
+        actualBoundingBoxDescent: 6
       };
-    },
+    }
   };
   return {
     width,
@@ -88,26 +113,42 @@ function makeMockCanvas(width = 1920, height = 1080) {
     ops,
     getContext() {
       return ctx;
-    },
+    }
   };
 }
 
-test('host mouth sampler, seeded blinks, pose/side transitions and pixel dissolve', () => {
+test('host mouth sampler, seeded blinks, pose/side transitions and scale 35-45%', () => {
   const mouth = {
     fps: 12,
     shapes: 'cmaoe',
     level_fps: 30,
-    level: [0.02, 0.35, 0.85, 0.6, 0.9],
+    level: [0.02, 0.35, 0.85, 0.6, 0.9]
   };
-  for (let i = 0; i < MOUTH_SHAPES.length; i++) {
+  for (let i = 0; i < MOUTH_SHAPES.length; i += 1) {
     const sample = sampleMouth(mouth, (i + 0.1) / 12);
     assert.equal(sample.shape, MOUTH_SHAPES[i]);
   }
   assert.equal(isBlinking(1.23, 'seed-a'), isBlinking(1.23, 'seed-a'));
 
+  const layout = computeContentRect(1920, 1080, 'left', true);
+  const ratio = layout.hostBox.height / 1080;
+  assert.ok(ratio >= 0.35 && ratio <= 0.45, `host ratio ${ratio}`);
+
   const beats = [
-    { id: 'b1', type: 'list', start: 0, end: 4, content: { side: 'left', mood: 'excited' } },
-    { id: 'b2', type: 'big', start: 4, end: 8, content: { side: 'right', mood: 'focused' } },
+    {
+      id: 'b1',
+      type: 'list',
+      start: 0,
+      end: 4,
+      content: { side: 'left', mood: 'excited' }
+    },
+    {
+      id: 'b2',
+      type: 'big',
+      start: 4,
+      end: 8,
+      content: { side: 'right', mood: 'focused' }
+    }
   ];
   const startState = resolveHostState(beats, 0.2);
   assert.equal(startState.side, 'left');
@@ -126,8 +167,9 @@ test('host mouth sampler, seeded blinks, pose/side transitions and pixel dissolv
   assert.ok(midDissolveIn.dissolve < 1 && midDissolveIn.dissolve > 0);
 });
 
-test('all 4 host variants draw deterministically across out-of-order frame seeks', () => {
+test('all 4 host plugins draw deterministically and have distinct silhouettes', () => {
   assert.equal(HOST_VARIANTS.length, 4);
+  const signatures = new Set();
   for (const variant of HOST_VARIANTS) {
     const c1 = makeMockCanvas();
     const c2 = makeMockCanvas();
@@ -141,7 +183,7 @@ test('all 4 host variants draw deterministically across out-of-order frame seeks
       mood: 'excited',
       pose: 'point',
       side: 'left',
-      dissolve: 0.7,
+      dissolve: 0.7
     });
     drawHost(c2.getContext(), {
       variant,
@@ -151,7 +193,7 @@ test('all 4 host variants draw deterministically across out-of-order frame seeks
       mood: 'neutral',
       pose: 'idle',
       side: 'right',
-      dissolve: 1,
+      dissolve: 1
     });
     c2.ops.length = 0;
     drawHost(c2.getContext(), {
@@ -162,13 +204,15 @@ test('all 4 host variants draw deterministically across out-of-order frame seeks
       mood: 'excited',
       pose: 'point',
       side: 'left',
-      dissolve: 0.7,
+      dissolve: 0.7
     });
     assert.deepEqual(c1.ops, c2.ops, variant);
+    signatures.add(c1.ops.slice(0, 40).join('|'));
   }
+  assert.equal(signatures.size, 4);
 });
 
-test('createStage renders beats, host and captions and keeps text bounds within safe area', () => {
+test('createStage renders core and plugin beats with >=56px titles and >=34px body', () => {
   const bundle = {
     schemaVersion: 1,
     duration: 8,
@@ -177,7 +221,12 @@ test('createStage renders beats, host and captions and keeps text bounds within 
     height: 1080,
     look: {
       id: 'pilot',
-      resolved: { palette: 'studio-dark', hostVariant: 'pixel-sprite', showHost: true },
+      resolved: {
+        palette: 'studio-dark',
+        marks: 'halftone-dots',
+        hostVariant: 'pixel-sprite',
+        showHost: true
+      }
     },
     beats: [
       {
@@ -186,40 +235,55 @@ test('createStage renders beats, host and captions and keeps text bounds within 
         start: 0,
         end: 4,
         content: {
-          kicker: 'Variant 01',
-          title: 'Pixel Sprite Anchor',
-          subtitle: 'Five mouths and seeded blinks',
-          items: ['Lip-synced from voice', 'Turns toward content'],
+          kicker: 'HTTP/2 TCP Multiplexing',
+          title: 'Single Lost Packet Stalls All Lanes',
+          subtitle: 'Kernel buffer holds streams 2 and 3 behind #42',
+          items: [
+            'Stream 1: Packet #42 dropped in transit',
+            'Stream 2: Ready in memory, blocked by OS',
+            'Stream 3: Ready in memory, blocked by OS'
+          ],
           side: 'left',
-          mood: 'excited',
-        },
+          mood: 'focused'
+        }
       },
       {
-        id: 'second',
-        type: 'big',
+        id: 'compare',
+        type: 'metric-compare',
         start: 4,
         end: 8,
-        content: {
-          kicker: 'Transition',
-          title: 'Pixel Dissolve Across Stage',
-          side: 'right',
-          mood: 'focused',
-        },
-      },
+        title: 'TCP Stall vs QUIC Stream Isolation',
+        badge: 'BENCHMARK @ 2% LOSS',
+        side: 'right',
+        mood: 'excited'
+      }
     ],
     mouth: { fps: 12, shapes: 'cmaoe'.repeat(20) },
-    captions: [{ text: 'Every frame is a pure function of time.', start: 0.2, end: 3.8 }],
+    captions: [
+      {
+        text: 'One dropped TCP segment freezes every multiplexed HTTP/2 stream.',
+        start: 0.2,
+        end: 3.8
+      }
+    ]
   };
   const canvas = makeMockCanvas(1920, 1080);
   const stage = createStage({ canvas, bundle });
   assert.equal(activeBeatAt(bundle.beats, 1.0).id, 'intro');
   assert.equal(activeCaptionAt(bundle.captions, 1.0).text, bundle.captions[0].text);
 
-  const bounds = stage.renderFrame(1.5);
-  assert.ok(bounds.length >= 3);
-  for (const b of bounds) {
-    assert.ok(b.left >= 60 && b.right <= 1860, `horizontal bound ${JSON.stringify(b)}`);
-    assert.ok(b.top >= 60 && b.bottom <= 1020, `vertical bound ${JSON.stringify(b)}`);
+  for (const t of [1.5, 5.5]) {
+    const bounds = stage.renderFrame(t);
+    assert.ok(bounds.length >= 3);
+    for (const b of bounds) {
+      assert.ok(b.left >= 60 && b.right <= 1860, `horiz ${JSON.stringify(b)}`);
+      assert.ok(b.top >= 60 && b.bottom <= 1020, `vert ${JSON.stringify(b)}`);
+      if (b.role === 'title') {
+        assert.ok(b.fontSize >= 56, `title fontSize ${b.fontSize}`);
+      } else {
+        assert.ok(b.fontSize >= 34, `body fontSize ${b.fontSize}`);
+      }
+    }
   }
   stage.dispose();
   assert.throws(() => stage.renderFrame(1.5), /disposed/);

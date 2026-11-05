@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "kind": "beat",
+  "id": "metric-compare",
+  "version": "1.0.0",
+  "lane": "launch",
+  "status": "built",
+  "requires": [],
+  "provides": []
+}

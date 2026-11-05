@@ -1,0 +1,4 @@
+== list title="Pixel Sprite Host"
+@ start
+- 64x64 grid upscaled nearest-neighbour @ grid
+- 6 fps stepped animation @ stepped

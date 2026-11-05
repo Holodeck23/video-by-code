@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "kind": "layer",
+  "id": "halftone-dots",
+  "version": "1.0.0",
+  "lane": "launch",
+  "status": "built",
+  "slot": "marks",
+  "requires": [],
+  "provides": [
+    "halftone-pattern"
+  ]
+}

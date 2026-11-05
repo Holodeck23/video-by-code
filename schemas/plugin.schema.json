@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "enum": [
+        "look",
+        "layer",
+        "beat",
+        "format",
+        "anchor",
+        "provider",
+        "analyser",
+        "finish"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "lane": {
+      "enum": [
+        "lab",
+        "launch"
+      ]
+    },
+    "status": {
+      "enum": [
+        "lab",
+        "spec",
+        "built",
+        "clip-passed",
+        "accepted"
+      ]
+    },
+    "slot": {
+      "enum": [
+        "palette",
+        "ground",
+        "marks",
+        "type",
+        "composition",
+        "progression",
+        "motion",
+        "transitions",
+        "finish",
+        "host"
+      ]
+    },
+    "requires": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "provides": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "version",
+    "lane",
+    "status",
+    "requires",
+    "provides"
+  ]
+}
