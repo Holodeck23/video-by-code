@@ -1,23 +1,27 @@
-// Finish layer: paper-grain (warm print registration marks and paper edge wash, requires matte).
+// paper-grain: light-ground paper grain overlay and warm sepia vignette via H.grain / H.vignette.
 (function (root) {
   'use strict';
-  const plugin = {
+
+  function draw(ctx, { width, height, t = 0 }) {
+    const H = root.H;
+    ctx.save();
+    if (H && typeof document !== 'undefined') {
+      H.grain(ctx, t, { strength: 0.028, cell: 2, seed: 11, fps: 12 });
+      H.vignette(ctx, { strength: 0.22, color: '#5a3c1e', inner: 0.62 });
+    } else {
+      ctx.strokeStyle = 'rgba(120, 98, 68, 0.24)';
+      ctx.lineWidth = 14;
+      ctx.strokeRect(0, 0, width, height);
+    }
+    ctx.restore();
+  }
+
+  root.VBC_PLUGINS = root.VBC_PLUGINS || {};
+  root.VBC_PLUGINS['layer/paper-grain'] = {
     kind: 'layer',
     id: 'paper-grain',
     slot: 'finish',
-    requires: ['matte'],
-    provides: [],
-    draw(ctx, state) {
-      if (!ctx || !state) return;
-      const { width, height, palette = {} } = state;
-      ctx.save();
-      ctx.strokeStyle = palette.ink || '#1c1917';
-      ctx.globalAlpha = 0.22;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(18, 18, width - 36, height - 36);
-      ctx.restore();
-    },
+    requires: ['light-ground', 'ink-marks'],
+    draw,
   };
-  root.VBC_PLUGINS = root.VBC_PLUGINS || {};
-  root.VBC_PLUGINS['layer/paper-grain'] = plugin;
 })(typeof window !== 'undefined' ? window : globalThis);

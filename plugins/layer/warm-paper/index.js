@@ -1,56 +1,69 @@
-// Ground layer: warm-paper (matte notebook paper with ruled blue lines, red margin rule and fiber flecks, provides matte).
+// warm-paper: warm cream fibrous sketchbook paper via H.paperTexture, ruled grid, and faint pencil marginalia.
 (function (root) {
   'use strict';
-  function hash(n) {
-    let x = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b);
-    x ^= x >>> 13;
-    return ((Math.imul(x, 0xc2b2ae35) ^ (x >>> 16)) >>> 0) / 4294967296;
+
+  function draw(ctx, { width, height, palette = {} }) {
+    const H = root.H;
+    const base = palette.bg || '#f4efe4';
+
+    ctx.save();
+    if (H && typeof document !== 'undefined') {
+      const tex = H.paperTexture(width, height, {
+        seed: 7,
+        tone: base,
+        fiber: 0.45,
+        grain: 0.38,
+        blotch: 0.28,
+      });
+      ctx.drawImage(tex, 0, 0);
+    } else {
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    // Subtle sketchbook dot/rule lines
+    ctx.strokeStyle = '#d6cbb5';
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.34;
+    const step = 48;
+    for (let y = step; y < height; y += step) {
+      ctx.beginPath();
+      ctx.moveTo(36, y);
+      ctx.lineTo(width - 36, y);
+      ctx.stroke();
+    }
+
+    // Vertical sketchbook margin rule
+    ctx.strokeStyle = '#e11d48';
+    ctx.globalAlpha = 0.18;
+    ctx.lineWidth = 2;
+    const marginX = height > width ? 68 : 84;
+    ctx.beginPath();
+    ctx.moveTo(marginX, 28);
+    ctx.lineTo(marginX, height - 28);
+    ctx.stroke();
+
+    // Faint erased pencil construction notes in background corners (like study.js whiteboard)
+    ctx.globalAlpha = 0.065;
+    ctx.fillStyle = '#292524';
+    ctx.strokeStyle = '#292524';
+    ctx.lineWidth = 2.5;
+    ctx.font = '700 38px "Chalkboard SE", "Marker Felt", cursive, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('f(t) -> frame', width - 54, 72);
+    ctx.beginPath();
+    ctx.arc(width - 110, 120, 42, 0.2, Math.PI * 1.35);
+    ctx.stroke();
+
+    ctx.restore();
   }
 
-  const plugin = {
+  root.VBC_PLUGINS = root.VBC_PLUGINS || {};
+  root.VBC_PLUGINS['layer/warm-paper'] = {
     kind: 'layer',
     id: 'warm-paper',
     slot: 'ground',
-    requires: [],
-    provides: ['matte'],
-    draw(ctx, state) {
-      if (!ctx || !state) return;
-      const { width, height, palette = {} } = state;
-      ctx.save();
-      ctx.fillStyle = palette.bg || '#f4efe4';
-      ctx.fillRect(0, 0, width, height);
-
-      // Warm notebook ruled lines
-      ctx.strokeStyle = 'rgba(59, 110, 165, 0.18)';
-      ctx.lineWidth = 1.5;
-      const ruleStep = 48;
-      for (let y = 96; y < height - 48; y += ruleStep) {
-        ctx.beginPath();
-        ctx.moveTo(32, y);
-        ctx.lineTo(width - 32, y);
-        ctx.stroke();
-      }
-
-      // Vertical red notebook margin line
-      const marginX = height > width ? 74 : 104;
-      ctx.strokeStyle = 'rgba(217, 70, 70, 0.28)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(marginX, 0);
-      ctx.lineTo(marginX, height);
-      ctx.stroke();
-
-      // Deterministic paper fibers
-      ctx.fillStyle = palette.muted || '#57534e';
-      ctx.globalAlpha = 0.08;
-      for (let i = 0; i < 48; i++) {
-        const fx = Math.round(hash(i * 17 + 1) * width);
-        const fy = Math.round(hash(i * 31 + 2) * height);
-        ctx.fillRect(fx, fy, 4 + (i % 5), 2);
-      }
-      ctx.restore();
-    },
+    provides: ['light-ground', 'paper-tooth', 'matte'],
+    draw,
   };
-  root.VBC_PLUGINS = root.VBC_PLUGINS || {};
-  root.VBC_PLUGINS['layer/warm-paper'] = plugin;
 })(typeof window !== 'undefined' ? window : globalThis);
