@@ -6,6 +6,19 @@ import '../plugins/layer/host-ink-mascot/index.js';
 import '../plugins/layer/host-cyber-bust/index.js';
 import '../plugins/beat/metric-compare/index.js';
 import '../plugins/layer/halftone-dots/index.js';
+import '../plugins/layer/neon-wall/index.js';
+import '../plugins/layer/neon-tube/index.js';
+import '../plugins/layer/neon-bloom/index.js';
+import '../plugins/layer/warm-paper/index.js';
+import '../plugins/layer/ink-boil/index.js';
+import '../plugins/layer/paper-grain/index.js';
+import '../plugins/layer/sdf-field/index.js';
+import '../plugins/layer/sdf-forms/index.js';
+import '../plugins/layer/sdf-post/index.js';
+import '../plugins/look/neon-sign/index.js';
+import '../plugins/look/doodle-ink/index.js';
+import '../plugins/look/crumbs-sdf/index.js';
+import { discoverPlugins, resolveLookSpec } from '../lib/registry.mjs';
 import '../lib/stage/host.js';
 import '../lib/stage/index.js';
 
@@ -301,4 +314,75 @@ test('createStage renders core and plugin beats with >=56px titles and >=34px bo
   }
   stage.dispose();
   assert.throws(() => stage.renderFrame(1.5), /disposed/);
+});
+
+test('three pilot looks resolve 10 slots with ink-mascot default, allow valid remixes, refuse broken coupling', async () => {
+  const reg = discoverPlugins();
+  for (const lookId of ['neon-sign', 'doodle-ink', 'crumbs-sdf']) {
+    const resolved = await resolveLookSpec(lookId, reg);
+    assert.equal(resolved.id, lookId);
+    assert.equal(resolved.slots.host, 'host-ink-mascot');
+
+    const canvas = makeMockCanvas(1920, 1080);
+    const stage = createStage({
+      canvas,
+      bundle: {
+        schemaVersion: 1,
+        duration: 6,
+        fps: 30,
+        width: 1920,
+        height: 1080,
+        look: resolved,
+        beats: [
+          {
+            id: 'b1',
+            type: 'title',
+            start: 0,
+            end: 3,
+            content: { kicker: 'PILOT', title: `${lookId} Stage Verification`, subtitle: 'Full composition fill' }
+          },
+          {
+            id: 'b2',
+            type: 'lyric',
+            start: 3,
+            end: 6,
+            content: { title: 'Synchronized Lyric Line', text: 'Synchronized Lyric Line' }
+          }
+        ],
+        words: [{ text: 'Synchronized', spoken: 'Synchronized', start: 3.1, end: 4.2, confidence: 1 }],
+        mouth: { fps: 12, shapes: 'cmaoe'.repeat(16) },
+        music: { beats: [0.5, 1.0, 1.5, 2.0, 2.5, 3.0], downbeats: [0.5, 2.5], sections: [] },
+        captions: [{ text: 'Testing pilot look rendering.', start: 0.2, end: 2.8 }]
+      }
+    });
+    const bounds = stage.renderFrame(1.2);
+    assert.ok(bounds.length >= 3, `${lookId} should draw title + composition callout cards`);
+    const lyricBounds = stage.renderFrame(3.6);
+    assert.ok(lyricBounds.length >= 2, `${lookId} should draw lyric beat`);
+    stage.dispose();
+  }
+
+  // Allowed remixes
+  const neonRiso = await resolveLookSpec('neon-sign + palette=risograph + host=cyber-bust', reg);
+  assert.equal(neonRiso.slots.palette, 'risograph');
+  assert.equal(neonRiso.slots.host, 'host-cyber-bust');
+
+  // Refused remixes: locked identity layer
+  await assert.rejects(
+    resolveLookSpec('neon-sign + marks=ink-boil', reg),
+    /slot marks is a locked identity layer on neon-sign/
+  );
+  // Refused remixes: broken capability coupling
+  await assert.rejects(
+    resolveLookSpec('neon-sign + ground=warm-paper', reg),
+    /requires missing capability "light-map"/
+  );
+  await assert.rejects(
+    resolveLookSpec('doodle-ink + ground=neon-wall', reg),
+    /requires missing capability "matte"/
+  );
+  await assert.rejects(
+    resolveLookSpec('crumbs-sdf + ground=neon-wall', reg),
+    /requires missing capability "audio-reactive"/
+  );
 });

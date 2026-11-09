@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "kind": "layer",
+  "id": "warm-paper",
+  "version": "0.1.0",
+  "lane": "launch",
+  "status": "built",
+  "slot": "ground",
+  "requires": [],
+  "provides": [
+    "matte"
+  ]
+}

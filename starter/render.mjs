@@ -95,8 +95,8 @@ async function video() {
 async function prepareAudio(len) {
   const mode = o.audio ?? (o.voice && meta.hasScore ? 'page' : 'none');
   const inputs = [];
-  if (mode === 'page') {
-    if (!meta.hasScore) die('--audio page needs window.scoreSound and lib/sound.js on the page');
+  if (mode === 'page' || mode === 'bundle') {
+    if (!meta.hasScore) die(`--audio ${mode} needs window.scoreSound and lib/sound.js on the page`);
     const { wav, peak } = await pageAudioWav(page, to, { voiceover: !!o.voice });
     const f = path.join(tmp, 'page-sound.wav');
     writeFileSync(f, wav);

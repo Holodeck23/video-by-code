@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "kind": "layer",
+  "id": "ink-boil",
+  "version": "0.1.0",
+  "lane": "launch",
+  "status": "built",
+  "slot": "marks",
+  "requires": [
+    "matte"
+  ],
+  "provides": [
+    "ink-boil"
+  ],
+  "dependencies": [
+    "lib/ink-doodle.js"
+  ]
+}

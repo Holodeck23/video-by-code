@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "kind": "layer",
+  "id": "sdf-forms",
+  "version": "0.1.0",
+  "lane": "launch",
+  "status": "built",
+  "slot": "marks",
+  "requires": [
+    "audio-reactive"
+  ],
+  "provides": [
+    "emissive"
+  ],
+  "dependencies": [
+    "lib/features.js"
+  ]
+}

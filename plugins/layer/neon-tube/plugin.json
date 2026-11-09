@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "kind": "layer",
+  "id": "neon-tube",
+  "version": "0.1.0",
+  "lane": "launch",
+  "status": "built",
+  "slot": "marks",
+  "requires": [
+    "light-map"
+  ],
+  "provides": [
+    "emissive"
+  ]
+}

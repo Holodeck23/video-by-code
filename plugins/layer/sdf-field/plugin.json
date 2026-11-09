@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "kind": "layer",
+  "id": "sdf-field",
+  "version": "0.1.0",
+  "lane": "launch",
+  "status": "built",
+  "slot": "ground",
+  "requires": [],
+  "provides": [
+    "light-map",
+    "audio-reactive"
+  ]
+}

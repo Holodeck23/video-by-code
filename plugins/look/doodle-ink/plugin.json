@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "kind": "look",
+  "id": "doodle-ink",
+  "version": "0.1.0",
+  "lane": "launch",
+  "status": "built",
+  "requires": [
+    "matte",
+    "ink-boil"
+  ],
+  "provides": [],
+  "dependencies": [
+    "lib/stage/index.js",
+    "lib/stage/host.js",
+    "lib/ink-doodle.js"
+  ]
+}
