@@ -27,6 +27,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _common import split_sentences  # noqa: E402  (language-aware: also splits 。！？ and counts moras)
+
 if "-h" not in sys.argv and "--help" not in sys.argv:
     import numpy as np
     import soundfile as sf
@@ -39,24 +42,6 @@ def sha256(path: Path) -> str:
         for b in iter(lambda: f.read(1 << 20), b""):
             h.update(b)
     return h.hexdigest()
-
-
-def split_sentences(paragraph: str, min_words: int = 4) -> list[str]:
-    """Split on sentence punctuation and merge fragments shorter than min_words."""
-    raw = [s.strip() for s in re.split(r"(?<=[.!?])\s+", paragraph) if s.strip()]
-    merged: list[str] = []
-    buf = ""
-    for s in raw:
-        buf = f"{buf} {s}".strip() if buf else s
-        if len(re.findall(r"[A-Za-z0-9']+", buf)) >= min_words:
-            merged.append(buf)
-            buf = ""
-    if buf:
-        if merged:
-            merged[-1] = f"{merged[-1]} {buf}"
-        else:
-            merged.append(buf)
-    return merged
 
 
 def srt_stamp(seconds: float) -> str:
@@ -73,6 +58,7 @@ def main() -> int:
     ap.add_argument("--lang", default="en-us")
     ap.add_argument("--speed", type=float, default=0.89)
     ap.add_argument("--gap", type=float, default=0.75, help="Silence between paragraphs, s (default 0.75)")
+    ap.add_argument("--lead", type=float, default=0.4, help="Silence before the first sentence, s (default 0.4; plain-script mode)")
     ap.add_argument("--sent-gap", type=float, default=0.35, help="Silence between sentences, s (default 0.35)")
     ap.add_argument("--say", type=Path, help='JSON phonetic dictionary, e.g. {"3:07": "three oh seven"}')
     ap.add_argument("--limit", type=int, help="Only synthesize the first N paragraphs/beats")
@@ -170,11 +156,11 @@ def main() -> int:
     for p in paras:
         for k, v in say.items():
             p = p.replace(k, v)
-        sents = split_sentences(re.sub(r"\s+", " ", p))
+        sents = split_sentences(re.sub(r"\s+", " ", p), lang=a.lang)
         for j, s in enumerate(sents):
             items.append((s, a.gap if j == len(sents) - 1 else a.sent_gap))
 
-    chunks = [np.zeros(int(rate * 0.4), dtype=np.float32)]
+    chunks = [np.zeros(int(rate * a.lead), dtype=np.float32)]
     for i, (s, gap) in enumerate(items, 1):
         audio, rate = tts.create(s, voice=a.voice, speed=a.speed, lang=a.lang)
         chunks.extend([audio, np.zeros(int(rate * gap), dtype=audio.dtype)])

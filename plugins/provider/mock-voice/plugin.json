@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "kind": "provider",
+  "id": "mock-voice",
+  "version": "0.1.0",
+  "lane": "lab",
+  "status": "lab",
+  "requires": [],
+  "provides": []
+}

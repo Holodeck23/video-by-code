@@ -15,6 +15,7 @@ import {
   validateBundleExtensions,
   scaffoldPlugin,
 } from '../lib/registry.mjs';
+import { buildVoice } from '../lib/voice.mjs';
 
 const ROOT_DIR = fileURLToPath(new URL('..', import.meta.url));
 const [command, sub, arg3, ...extra] = process.argv.slice(2);
@@ -28,9 +29,28 @@ const HELP_TEXT = [
   '  vbc plugin list',
   '  vbc lint',
   '  vbc look list',
+  '  vbc voice --prod DIR [--lang ja] [--voice kokoro:af_heart] [--provider ID] [--redo ID|N]',
+  '            [--master DIR|voice.json] [--speed 0.89] [--gap 0.75]',
   '',
-  'Pilot commands follow: new, make, voice, music, words, cues, stills, preview, render, check.',
+  'Pilot commands follow: new, make, music, words, cues, stills, preview, render, check.',
 ].join('\n');
+
+function parseVoiceFlags(args) {
+  const known = new Set(['prod', 'lang', 'voice', 'provider', 'redo', 'master', 'speed', 'gap']);
+  const opts = {};
+  for (let i = 0; i < args.length; i += 1) {
+    const name = args[i].startsWith('--') ? args[i].slice(2) : null;
+    if (!name || !known.has(name)) {
+      throw new Error(`unknown argument ${args[i]}`);
+    }
+    if (args[i + 1] === undefined || args[i + 1].startsWith('--')) {
+      throw new Error(`--${name} needs a value`);
+    }
+    opts[name] = args[i + 1];
+    i += 1;
+  }
+  return opts;
+}
 
 function parseFlags(args) {
   const opts = {};
@@ -92,6 +112,14 @@ try {
       throw new Error(errors.join('\n'));
     }
     console.log(`PASS: ${registry.entries.length} plugins and capability vocabulary clean`);
+  } else if (command === 'voice') {
+    const opts = parseVoiceFlags([sub, arg3, ...extra].filter((x) => x !== undefined));
+    const { voice, synthesized, reused, stale } = await buildVoice({ ...opts, rootDir: ROOT_DIR });
+    console.log(`PASS: voice ${voice.language} ${voice.duration.toFixed(2)}s, ${voice.paragraphs.length} paragraphs ` +
+      `(synthesized ${synthesized.length}: ${synthesized.join(', ') || 'none'}; reused ${reused.length})`);
+    for (const item of stale) {
+      console.log(`STALE: ${item.product} (${item.reason}); rebuild it before render`);
+    }
   } else if (command === 'look' && sub === 'list' && !arg3) {
     const manifestUrl = new URL('../looks/manifest.json', import.meta.url);
     const manifest = JSON.parse(await readFile(manifestUrl, 'utf8'));
