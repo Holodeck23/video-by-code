@@ -174,17 +174,23 @@ def loudnorm_2pass(src: Path, dst: Path, I: float, TP: float, LRA: float, pre: s
 
 
 # ---------------------------------------------------------------- text
-def norm_word(w: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", w.lower().replace("’", "'"))
+def norm_word(w: str, lang: str = "en") -> str:
+    """Comparable key for a token; Unicode- and language-aware (see langtext.py)."""
+    from langtext import norm_word as _norm
+    return _norm(w, lang)
 
 
-def tokens(text: str) -> list[str]:
-    """Display tokens: whitespace split, hyphenated words split into parts."""
+def tokens(text: str, lang: str = "en") -> list[str]:
+    """Display tokens: whitespace split with hyphenated words split into parts; for Japanese and
+    Chinese, script-run pieces from langtext.display_tokens."""
+    from langtext import display_tokens, is_cjk
+    if is_cjk(lang):
+        return display_tokens(text, lang)
     out = []
     for t in text.split():
         parts = [p for p in re.split(r"(?<=\w)[-–—](?=\w)", t) if p]
         out += parts
-    return [t for t in out if norm_word(t)]
+    return [t for t in out if norm_word(t, lang)]
 
 
 def apply_say_map(text: str, mapping: dict[str, str]) -> str:
@@ -200,13 +206,20 @@ def apply_say_map(text: str, mapping: dict[str, str]) -> str:
     return text
 
 
-def split_sentences(par: str, min_words: int = 4) -> list[str]:
-    """Split on . ! ? and merge fragments under min_words into the following sentence."""
-    raw = [s.strip() for s in re.split(r"(?<=[.!?])[\"')\]]*\s+", par) if s.strip()]
+def split_sentences(par: str, min_words: int = 4, lang: str = "en") -> list[str]:
+    """Split on . ! ? (and 。！？ for Japanese/Chinese) and merge fragments under min_words
+    comparable units into the following sentence."""
+    from langtext import is_cjk, units
+    cjk = is_cjk(lang)
+    if cjk:
+        raw = [s.strip() for s in re.split(r"(?<=[。！？!?])[」』）)]*\s*", par) if s.strip()]
+    else:
+        raw = [s.strip() for s in re.split(r"(?<=[.!?])[\"')\]]*\s+", par) if s.strip()]
     merged, buf = [], ""
     for s in raw:
         buf = f"{buf} {s}".strip() if buf else s
-        if len(re.findall(r"[A-Za-z0-9']+", buf)) >= min_words:
+        count = len(units(buf, lang)) if cjk else len(re.findall(r"[A-Za-z0-9']+", buf))
+        if count >= min_words:
             merged.append(buf)
             buf = ""
     if buf:
@@ -253,7 +266,7 @@ def asr_words(audio: Path, engine: str, model: str | None, prompt: str | None = 
         words = []
         for seg in data.get("transcription", []):
             for raw in seg["text"].split():
-                if norm_word(raw):
+                if norm_word(raw, language):
                     words.append({"w": raw.strip(), "start": seg["offsets"]["from"] / 1000,
                                   "end": seg["offsets"]["to"] / 1000})
         return {"engine": engine, "model": mpath.name, "words": words,
@@ -270,7 +283,7 @@ def asr_words(audio: Path, engine: str, model: str | None, prompt: str | None = 
                                initial_prompt=prompt, vad_filter=False,
                                condition_on_previous_text=False)
         words = [{"w": w.word.strip(), "start": float(w.start), "end": float(w.end)}
-                 for s in segs for w in (s.words or []) if norm_word(w.word)]
+                 for s in segs for w in (s.words or []) if norm_word(w.word, language)]
         return {"engine": engine, "model": str(name), "words": words,
                 "text": " ".join(w["w"] for w in words)}
     raise ToolError(f"unknown ASR engine '{engine}' (whisper-cpp | faster-whisper)")

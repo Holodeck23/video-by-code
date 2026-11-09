@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import hashlib
 import json
 import re
 import subprocess
@@ -34,14 +35,58 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import ToolError, decode, guard_outputs, main_guard, need_file, read_json, write_json  # noqa: E402
+from _common import ToolError, decode, guard_outputs, main_guard, need_file, read_json, sha256, write_json  # noqa: E402
+from langtext import display_tokens, have_reader, is_cjk, lang_code, norm_word, unit_map, units  # noqa: E402
 
 SR = 22050
 GANG_PAT = None  # set from --gang-pattern; None disables gang-vocal snapping
 
 
-def norm(w: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", w.lower().replace("’", "'"))
+def norm(w: str, lang: str = "en") -> str:
+    return norm_word(w, lang)
+
+
+def _file_hash(path: Path) -> str:
+    return sha256(path)
+
+
+def fingerprint(parts: dict) -> str:
+    return hashlib.sha256(json.dumps(parts, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+def heard_entries(text: str, t0: float, t1: float, lang: str) -> list[dict]:
+    """ASR text -> comparable units. Spaced languages: one entry per token, all sharing the
+    segment's span (whisper-cli -ml 1 already yields one token per segment). Japanese/Chinese:
+    one entry per mora/character, the span shared out evenly."""
+    t1 = max(t0 + 0.05, t1)
+    if is_cjk(lang):
+        us = units(text, lang)
+        if not us:
+            return []
+        step = (t1 - t0) / len(us)
+        return [{"w": u, "n": u, "start": t0 + i * step, "end": t0 + (i + 1) * step} for i, u in enumerate(us)]
+    out = []
+    for tok in text.split():
+        n = norm(tok, lang)
+        if n:
+            out.append({"w": tok, "n": n, "start": t0, "end": t1})
+    return out
+
+
+def group_units(ws: list[dict]) -> list[dict]:
+    """Merge timed units back into the display tokens they came from (identity for spaced languages)."""
+    out: list[dict] = []
+    for u in ws:
+        if out and out[-1]["_tok"] == u["tok"]:
+            out[-1]["end"] = u["end"]
+            if u.get("src") == "asr":
+                out[-1]["src"] = "asr"
+        else:
+            out.append({"_tok": u["tok"], "w": u["w"], "start": u["start"], "end": u["end"],
+                        "src": u.get("src", "interp")})
+    for g in out:
+        del g["_tok"]
+    return out
 
 
 def syllables_est(w: str) -> int:
@@ -123,17 +168,23 @@ def load_cues_or_script(path: Path, duration: float) -> list[dict]:
             for i, p in enumerate(paras)]
 
 
-def transcribe_words(audio: Path, backend: str, model_path: str, prompt: str, raw_cache: Path) -> list[dict]:
+def transcribe_words(audio: Path, backend: str, model_path: str, prompt: str, raw_cache: Path,
+                     lang: str = "en") -> list[dict]:
+    """ASR words, cached next to the output. The cache is keyed on everything that changes the
+    transcript (audio content, backend, model, language, prompt); a mismatch re-transcribes."""
+    key = fingerprint({"audio": _file_hash(audio), "backend": backend, "model": str(model_path),
+                       "lang": lang_code(lang), "prompt": prompt})
     if raw_cache.is_file():
         cached = read_json(raw_cache)
-        if isinstance(cached, list):
-            return cached
+        if isinstance(cached, dict) and cached.get("fingerprint") == key and isinstance(cached.get("heard"), list):
+            return cached["heard"]
 
     heard: list[dict] = []
     if backend == "whisper-cli":
         with tempfile.TemporaryDirectory() as d:
             base = Path(d) / "out"
-            cmd = ["whisper-cli", "-m", model_path, "-f", str(audio), "-oj", "-of", str(base), "-np", "-ml", "1"]
+            cmd = ["whisper-cli", "-m", model_path, "-f", str(audio), "-oj", "-of", str(base), "-np", "-ml", "1",
+                   "-l", lang_code(lang)]
             res = subprocess.run(cmd, capture_output=True, text=True)
             if res.returncode != 0:
                 raise ToolError(f"whisper-cli failed: {res.stderr.strip()}")
@@ -142,36 +193,30 @@ def transcribe_words(audio: Path, backend: str, model_path: str, prompt: str, ra
                 w = seg.get("text", "").strip()
                 t0 = float(seg.get("offsets", {}).get("from", 0)) / 1000.0
                 t1 = float(seg.get("offsets", {}).get("to", 0)) / 1000.0
-                for tok in w.split():
-                    if norm(tok):
-                        heard.append({"w": tok, "n": norm(tok), "start": t0, "end": max(t0 + 0.05, t1)})
+                heard.extend(heard_entries(w, t0, t1, lang))
     elif backend == "mlx-whisper":
         import mlx_whisper  # type: ignore
         raw = mlx_whisper.transcribe(str(audio), path_or_hf_repo=model_path, word_timestamps=True,
-                                     initial_prompt=prompt, language="en", condition_on_previous_text=False)
+                                     initial_prompt=prompt, language=lang_code(lang), condition_on_previous_text=False)
         for seg in raw.get("segments", []):
             for w in seg.get("words", []):
-                if norm(w["word"]):
-                    heard.append({"w": w["word"].strip(), "n": norm(w["word"]),
-                                  "start": float(w["start"]), "end": float(w["end"])})
+                heard.extend(heard_entries(w["word"].strip(), float(w["start"]), float(w["end"]), lang))
     elif backend == "faster-whisper":
         from faster_whisper import WhisperModel  # type: ignore
         model = WhisperModel(model_path, device="cpu", compute_type="int8")
-        segs, _ = model.transcribe(str(audio), language="en", word_timestamps=True,
+        segs, _ = model.transcribe(str(audio), language=lang_code(lang), word_timestamps=True,
                                    initial_prompt=prompt, vad_filter=True)
         for s in segs:
             for w in s.words or []:
-                if norm(w.word):
-                    heard.append({"w": w.word.strip(), "n": norm(w.word),
-                                  "start": float(w.start), "end": float(w.end)})
+                heard.extend(heard_entries(w.word.strip(), float(w.start), float(w.end), lang))
     else:
         raise ToolError(f"unknown transcription backend: {backend}")
 
-    write_json(raw_cache, heard)
+    write_json(raw_cache, {"fingerprint": key, "heard": heard})
     return heard
 
 
-def align_acoustic(cues: list[dict], y, bpm: float, phase: float) -> list[dict]:
+def align_acoustic(cues: list[dict], y, bpm: float, phase: float, lang: str = "en") -> list[dict]:
     import librosa
     import numpy as np
 
@@ -192,7 +237,7 @@ def align_acoustic(cues: list[dict], y, bpm: float, phase: float) -> list[dict]:
 
     lines = []
     for i, c in enumerate(cues):
-        words = re.findall(r"[^\s]+", c["text"])
+        words = display_tokens(c["text"], lang) if is_cjk(lang) else re.findall(r"[^\s]+", c["text"])
         if not words:
             continue
         t0 = c["start"]
@@ -254,6 +299,11 @@ def main() -> int:
     ap.add_argument("--window", type=float, default=30.0, help="Max seconds after cue start to accept a Whisper match")
     ap.add_argument("--offset", type=float, default=0.0, help="Seconds to subtract from all aligned timestamps")
     ap.add_argument("--gang-pattern", help="Regex (case-insensitive) matching whole lines of stacked/shouted gang vocals, e.g. \"^(yes we did|not me)$\"; their word pairs snap to the 16th-note grid (acoustic backend)")
+    ap.add_argument("--lang", default="en",
+                    help="Spoken language code (en, ja, de, ...). Selects ASR language and how words are compared; "
+                         "ja/zh compare per mora/character (install pykakasi to read kanji as kana)")
+    ap.add_argument("--min-match", type=float, default=0.4,
+                    help="Fail when fewer than this fraction of script units were heard (ASR backends; default 0.4)")
     ap.add_argument("--force", action="store_true")
     a = ap.parse_args()
     global GANG_PAT
@@ -267,15 +317,19 @@ def main() -> int:
     cues = load_cues_or_script(cues_path, duration)
 
     if a.backend == "acoustic":
-        lines = align_acoustic(cues, y, a.bpm, a.phase)
+        lines = align_acoustic(cues, y, a.bpm, a.phase, a.lang)
         matched = sum(len(ln["words"]) for ln in lines)
         total = matched
     else:
         raw_cache = a.output.with_suffix(".raw.json")
         prompt = " ".join(c["text"] for c in cues)
-        heard = transcribe_words(audio_path, a.backend, a.whisper_model, prompt, raw_cache)
-        known = [{"w": tok, "n": norm(tok), "line": li}
-                 for li, c in enumerate(cues) for tok in c["text"].split() if norm(tok)]
+        heard = transcribe_words(audio_path, a.backend, a.whisper_model, prompt, raw_cache, a.lang)
+        known = [{**u, "line": li} for li, c in enumerate(cues) for u in unit_map(c["text"], a.lang)]
+        if not known:
+            raise ToolError("no comparable narration tokens in the script for language "
+                            f"'{a.lang}'; refusing to align nothing")
+        if not heard:
+            raise ToolError("no comparable tokens heard in the audio; wrong language, silence or a failed transcription")
         sm = difflib.SequenceMatcher(a=[k["n"] for k in known], b=[h["n"] for h in heard], autojunk=False)
         for blk in sm.get_matching_blocks():
             for idx in range(blk.size):
@@ -307,11 +361,16 @@ def main() -> int:
                 "text": c["text"],
                 "start": ws[0]["start"],
                 "end": ws[-1]["end"],
-                "words": [{k: w[k] for k in ("w", "start", "end", "src")} for w in ws],
+                "words": group_units(ws),
             })
         lines = split_long_or_gapped_lines(raw_lines)
         matched = sum(1 for k in known if k.get("src") == "asr")
         total = len(known)
+        if matched / total < a.min_match:
+            raise ToolError(
+                f"only {matched}/{total} script units were heard in the audio (< --min-match {a.min_match}); "
+                f"wrong language ('{a.lang}'), wrong speech or a failed transcription. Re-run with the right "
+                "--lang or fix the audio; refusing to invent evenly spread timings.")
 
     if a.offset:
         for ln in lines:
@@ -331,6 +390,7 @@ def main() -> int:
 
     write_json(a.output, {
         "backend": a.backend,
+        "language": lang_code(a.lang),
         "audio": audio_path.name,
         "matched": matched,
         "total": total,

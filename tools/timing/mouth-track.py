@@ -28,6 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import ToolError, decode, guard_outputs, main_guard, read_json, sha256, write_json  # noqa: E402
+from langtext import lang_code, mouth_sounds  # noqa: E402
 
 SR = 16000
 LEVEL_FPS = 30
@@ -63,10 +64,21 @@ def word_list(doc) -> list[dict]:
     return sorted(out, key=lambda x: x["start"])
 
 
-def sounds(words: list[dict]) -> list[tuple[str, float, float]]:
-    """(class, start, end) per letter, letters spread evenly over the word."""
+def sounds(words: list[dict], lang: str = "en") -> list[tuple[str, float, float]]:
+    """(class, start, end) per sound. English: one per letter, spread evenly over the word.
+    Japanese: one per mora (lips-together moras get a closure then the vowel), weighted
+    by length and spread over the word; see langtext.mouth_sounds."""
     out = []
     for w in words:
+        if lang_code(lang) == "ja":
+            parts = mouth_sounds(w["text"], lang)
+            total = sum(d for _, d in parts)
+            t0 = w["start"]
+            for cls, d in parts:
+                dt = (w["end"] - w["start"]) * d / total
+                out.append((cls, t0, t0 + dt))
+                t0 += dt
+            continue
         letters = [ch for ch in w["text"].lower() if ch.isalpha()]
         if not letters:
             continue
@@ -98,7 +110,7 @@ def shapes_for(level, wanted: list[str]) -> str:
     return "".join(out)
 
 
-def build(wav: Path, words_doc, fps: int) -> dict:
+def build(wav: Path, words_doc, fps: int, lang: str = "en") -> dict:
     import numpy as np
     y, sr = decode(wav, SR)
     env = rms_steps(y, sr, fps)
@@ -106,7 +118,7 @@ def build(wav: Path, words_doc, fps: int) -> dict:
     ref = float(np.percentile(voiced, 90)) if voiced.size else 1.0
     level = np.clip(env / ref, 0, 1.2)
     wanted = [""] * len(level)
-    for cls, s, e in sounds(word_list(words_doc)):
+    for cls, s, e in sounds(word_list(words_doc), lang):
         for k in range(int(s * fps), min(len(level), int(e * fps) + 1)):
             if not wanted[k] or PRIORITY[cls] > PRIORITY[wanted[k]]:
                 wanted[k] = cls
@@ -118,6 +130,7 @@ def build(wav: Path, words_doc, fps: int) -> dict:
         "level_fps": LEVEL_FPS,
         "level": [round(float(v), 3) for v in lv30],
         "duration": round(len(y) / sr, 3),
+        "language": lang_code(lang),
         "voice_sha256": sha256(wav),
     }
 
@@ -128,12 +141,15 @@ def main() -> int:
     ap.add_argument("words", type=Path)
     ap.add_argument("out", type=Path)
     ap.add_argument("--fps", type=int, default=12, help="mouth drawings per second (default 12)")
+    ap.add_argument("--lang", help="Spoken language (default: the words file's \"language\", else en); ja maps kana moras to shapes")
     ap.add_argument("--force", action="store_true")
     a = ap.parse_args()
     if not 4 <= a.fps <= 30:
         raise ToolError("--fps must be between 4 and 30")
     guard_outputs([a.out], a.force)
-    track = build(a.voice, read_json(a.words), a.fps)
+    words_doc = read_json(a.words)
+    lang = a.lang or (words_doc.get("language") if isinstance(words_doc, dict) else None) or "en"
+    track = build(a.voice, words_doc, a.fps, lang)
     write_json(a.out, track, indent=None)
     counts = {k: track["shapes"].count(k) for k in "cmaoe"}
     print(f"{a.out}: {len(track['shapes'])} steps at {a.fps}/s, {track['duration']} s · " +
