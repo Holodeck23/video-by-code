@@ -152,6 +152,26 @@ def unit_map(text: str, lang: str | None = "en") -> list[dict]:
     return out
 
 
+def segment_unit_map(segments: list, lang: str | None = "en") -> list[dict]:
+    """Like unit_map, for a cue written as ``[shown, spoken]`` segments (from ``{shown|spoken}``
+    markup and pronunciation-dictionary rewrites). A segment whose shown form differs from what is
+    spoken becomes ONE display token (``w`` = shown, ``spoken`` = what was said) however many
+    words it takes to say; plain segments split into display tokens as usual."""
+    out: list[dict] = []
+    tok = 0
+    for shown, spoken in segments:
+        if not shown.strip() or shown == spoken:
+            for t in display_tokens(spoken, lang):
+                us = units(t, lang)
+                out.extend({"tok": tok, "w": t, "n": u} for u in us)
+                tok += 1 if us else 0
+        else:
+            us = units(spoken, lang)
+            out.extend({"tok": tok, "w": shown.strip(), "n": u, "spoken": spoken.strip()} for u in us)
+            tok += 1 if us else 0
+    return out
+
+
 # ------------------------------------------------------------------ mouth shapes
 _ROWS = {
     "a": "あかさたなはまやらわがざだばぱぁゃゎ",

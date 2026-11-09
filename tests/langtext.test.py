@@ -53,6 +53,23 @@ class Units(unittest.TestCase):
         self.assertEqual([x["tok"] for x in m][:2], [0, 1])
         self.assertEqual({x["w"] for x in m}, {"私", "は", "猫", "です"})
 
+    def test_segment_unit_map_keeps_shown_and_spoken_together(self):
+        segs = [["Welcome to", "Welcome to"], ["Q3", "quarter three"], ["at", "at"], ["3:07", "three oh seven"]]
+        mapped = L.segment_unit_map(segs, "en")
+        aw = load("align_words", "tools/timing/align-words.py")
+        for i, u in enumerate(mapped):
+            u["start"] = round(i * 0.2, 2)
+            u["end"] = round((i + 1) * 0.2, 2)
+            u["src"] = "asr"
+        grouped = aw.group_units(mapped)
+        self.assertEqual([g["w"] for g in grouped], ["Welcome", "to", "Q3", "at", "3:07"])
+        self.assertEqual(grouped[2]["spoken"], "quarter three")
+        self.assertEqual(grouped[2]["start"], 0.4)
+        self.assertEqual(grouped[2]["end"], 0.8)
+        self.assertEqual(grouped[4]["spoken"], "three oh seven")
+        self.assertEqual(grouped[4]["start"], 1.0)
+        self.assertEqual(grouped[4]["end"], 1.6)
+
 
 class Mouth(unittest.TestCase):
     def test_labials_close_then_open(self):

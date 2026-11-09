@@ -36,7 +36,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import ToolError, decode, guard_outputs, main_guard, need_file, read_json, sha256, write_json  # noqa: E402
-from langtext import display_tokens, have_reader, is_cjk, lang_code, norm_word, unit_map, units  # noqa: E402
+from langtext import display_tokens, is_cjk, lang_code, norm_word, segment_unit_map, unit_map, units  # noqa: E402
 
 SR = 22050
 GANG_PAT = None  # set from --gang-pattern; None disables gang-vocal snapping
@@ -82,8 +82,11 @@ def group_units(ws: list[dict]) -> list[dict]:
             if u.get("src") == "asr":
                 out[-1]["src"] = "asr"
         else:
-            out.append({"_tok": u["tok"], "w": u["w"], "start": u["start"], "end": u["end"],
-                        "src": u.get("src", "interp")})
+            g = {"_tok": u["tok"], "w": u["w"], "start": u["start"], "end": u["end"],
+                 "src": u.get("src", "interp")}
+            if u.get("spoken"):
+                g["spoken"] = u["spoken"]
+            out.append(g)
     for g in out:
         del g["_tok"]
     return out
@@ -152,6 +155,7 @@ def load_cues_or_script(path: Path, duration: float) -> list[dict]:
                 "start": float(c.get("start", 0.0)),
                 "end": float(c.get("end", duration)),
                 "text": " ".join(text.split()),
+                **({"segments": c["segments"]} if c.get("segments") else {}),
             })
         if out:
             return out
@@ -324,7 +328,8 @@ def main() -> int:
         raw_cache = a.output.with_suffix(".raw.json")
         prompt = " ".join(c["text"] for c in cues)
         heard = transcribe_words(audio_path, a.backend, a.whisper_model, prompt, raw_cache, a.lang)
-        known = [{**u, "line": li} for li, c in enumerate(cues) for u in unit_map(c["text"], a.lang)]
+        known = [{**u, "line": li} for li, c in enumerate(cues)
+                 for u in (segment_unit_map(c["segments"], a.lang) if c.get("segments") else unit_map(c["text"], a.lang))]
         if not known:
             raise ToolError("no comparable narration tokens in the script for language "
                             f"'{a.lang}'; refusing to align nothing")

@@ -52,7 +52,7 @@ def word_list(doc) -> list[dict]:
         items = []
     out = []
     for w in items:
-        text = str(w.get("w") or w.get("word") or w.get("text") or "").strip()
+        text = str(w.get("spoken") or w.get("w") or w.get("word") or w.get("text") or "").strip()
         try:
             s, e = float(w["start"]), float(w["end"])
         except (KeyError, TypeError, ValueError):
